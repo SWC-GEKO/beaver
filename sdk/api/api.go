@@ -19,7 +19,7 @@ type StatelessFunction interface {
 
 type StatefulFunction[K comparable, S any] interface {
 	Exec(ctx *FunctionContext[K, S], event *Event) (*Event, error)
-	// KeyBy(event Event) (K, error) not sure how I implement the splitter best -> virtual shards
+	KeyBy(event Event) (K, error)
 }
 
 type Sink interface {
