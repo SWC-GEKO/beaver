@@ -8,9 +8,6 @@ type Event struct {
 }
 
 type State[K comparable, S any] interface {
-	Set(key K, state S) error
-	Get(key K) (S, bool)
-	// Configuration (Connection-Function) is missing
 }
 
 type StatelessFunction interface {
