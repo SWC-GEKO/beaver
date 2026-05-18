@@ -7,19 +7,19 @@ type Event struct {
 	Body    []byte
 }
 
-type FunctionContext[K comparable, S any] interface {
+type State[K comparable, S any] interface {
 	Set(key K, state S) error
 	Get(key K) (S, bool)
 	// Configuration (Connection-Function) is missing
 }
 
 type StatelessFunction interface {
-	Exec(event *Event) (*Event, error)
+	Exec(ctx context.Context, event *Event) (*Event, error)
 }
 
 type StatefulFunction[K comparable, S any] interface {
-	Exec(ctx *FunctionContext[K, S], event *Event) (*Event, error)
-	KeyBy(event Event) (K, error)
+	KeyBy(ctx context.Context, event Event) (K, error)
+	Exec(ctx context.Context, state *State[K, S], event *Event) (*Event, error)
 }
 
 type Sink interface {
