@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"fmt"
 	"go/types"
 	"log"
 	"strings"
@@ -23,8 +24,8 @@ func NewRuntime(host, port string) *Runtime {
 
 func (rt *Runtime) StatelessFunction(name, path string) *Runtime {
 
-	if !validateFunction(path, STATELESS) {
-		log.Println("invalid runtime definition: ", name)
+	if err := validateFunction(path, STATELESS); err != nil {
+		log.Printf("%s invalid runtime definition: %v", name, err)
 	}
 
 	fn := function{
@@ -40,8 +41,9 @@ func (rt *Runtime) StatelessFunction(name, path string) *Runtime {
 }
 
 func (rt *Runtime) StatefulFunction(name, path string) *Runtime {
-	if !validateFunction(path, STATEFUL) {
-		log.Println("invalid runtime definition: ", name)
+
+	if err := validateFunction(path, STATEFUL); err != nil {
+		log.Printf("%s invalid runtime definition: %v", name, err)
 	}
 
 	fn := function{
@@ -56,7 +58,7 @@ func (rt *Runtime) StatefulFunction(name, path string) *Runtime {
 	return rt
 }
 
-func validateFunction(path string, functionType int) bool {
+func validateFunction(path string, functionType int) error {
 	var ifaceFuncName string
 	switch functionType {
 	case STATELESS:
@@ -64,9 +66,10 @@ func validateFunction(path string, functionType int) bool {
 	case STATEFUL:
 		ifaceFuncName = "StatefulFunction"
 	default:
-		log.Println("function type is unknown")
-		return false
+		return fmt.Errorf("function type is unknown")
 	}
+
+	log.Println(ifaceFuncName)
 
 	cfg := &packages.Config{
 		Mode: packages.NeedTypes |
@@ -78,7 +81,7 @@ func validateFunction(path string, functionType int) bool {
 
 	pkgs, err := packages.Load(cfg, ".")
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 
 	for _, pkg := range pkgs {
@@ -94,25 +97,25 @@ func validateFunction(path string, functionType int) bool {
 			var ok bool
 			iface, ok = o.Type().Underlying().(*types.Interface)
 			if !ok {
-				log.Printf("interface \"%n\" is not implemented", ifaceFuncName)
+				return fmt.Errorf("interface %q is not implemented", ifaceFuncName)
 			}
 			iface = iface.Complete()
 		}
 		if iface == nil {
-			log.Println("given file does not implement interface: ", ifaceFuncName)
-			return false
+			return fmt.Errorf("given file does not implement interface: %s", ifaceFuncName)
 		}
 
 		scope := pkg.Types.Scope()
 
 		for _, n := range scope.Names() {
 			o := scope.Lookup(n)
-
-			if types.Implements(o.Type(), iface) {
-				return true
+			//TODO: implement this check for generic interface implementations
+			if types.Implements(o.Type(), iface) ||
+				types.Implements(types.NewPointer(o.Type()), iface) {
+				return nil
 			}
 		}
 	}
 
-	return false
+	return fmt.Errorf("interface is not implemented")
 }
