@@ -9,12 +9,12 @@ import (
 type Fn struct {
 }
 
-func (f Fn) KeyBy(ctx context.Context, event api.Event) (string, error) {
+func (f Fn) KeyBy(ctx context.Context, event api.Event) (any, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (f Fn) Exec(ctx context.Context, state *api.State[string, string], event *api.Event) (*api.Event, error) {
+func (f Fn) Exec(ctx context.Context, state *api.State, event *api.Event) (*api.Event, error) {
 	//TODO implement me
 	panic("implement me")
 }

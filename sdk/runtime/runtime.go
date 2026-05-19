@@ -69,8 +69,6 @@ func validateFunction(path string, functionType int) error {
 		return fmt.Errorf("function type is unknown")
 	}
 
-	log.Println(ifaceFuncName)
-
 	cfg := &packages.Config{
 		Mode: packages.NeedTypes |
 			packages.NeedTypesInfo |
@@ -85,7 +83,6 @@ func validateFunction(path string, functionType int) error {
 	}
 
 	for _, pkg := range pkgs {
-
 		var iface *types.Interface
 		for _, i := range pkg.Types.Imports() {
 			if !(strings.Compare(i.Path(), "github.com/SWC-GEKO/beaver/sdk/api") == 0) {
@@ -99,6 +96,7 @@ func validateFunction(path string, functionType int) error {
 			if !ok {
 				return fmt.Errorf("interface %q is not implemented", ifaceFuncName)
 			}
+
 			iface = iface.Complete()
 		}
 		if iface == nil {
@@ -109,7 +107,7 @@ func validateFunction(path string, functionType int) error {
 
 		for _, n := range scope.Names() {
 			o := scope.Lookup(n)
-			//TODO: implement this check for generic interface implementations
+
 			if types.Implements(o.Type(), iface) ||
 				types.Implements(types.NewPointer(o.Type()), iface) {
 				return nil
