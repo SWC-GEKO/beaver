@@ -7,16 +7,16 @@ type Event struct {
 	Body    []byte
 }
 
-type State[K comparable, S any] interface {
+type State interface {
 }
 
 type StatelessFunction interface {
 	Exec(ctx context.Context, event *Event) (*Event, error)
 }
 
-type StatefulFunction[K comparable, S any] interface {
-	KeyBy(ctx context.Context, event Event) (K, error)
-	Exec(ctx context.Context, state *State[K, S], event *Event) (*Event, error)
+type StatefulFunction interface {
+	KeyBy(ctx context.Context, event Event) (any, error)
+	Exec(ctx context.Context, state *State, event *Event) (*Event, error)
 }
 
 type Sink interface {
