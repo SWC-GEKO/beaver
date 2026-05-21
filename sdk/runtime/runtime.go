@@ -22,6 +22,20 @@ func NewRuntime(host, port string) *Runtime {
 	}
 }
 
+func (rt *Runtime) Start() error {
+	//package and zip the function code and send it to the control-plane via http!
+	cnc, err := connect("localhost", "8080")
+	if err != nil {
+		return err
+	}
+
+	if err = cnc.upload(rt); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (rt *Runtime) StatelessFunction(name, path string) *Runtime {
 
 	if err := validateFunction(path, STATELESS); err != nil {
@@ -34,7 +48,6 @@ func (rt *Runtime) StatelessFunction(name, path string) *Runtime {
 		functionType: STATELESS,
 	}
 
-	// TODO: Add logic that if the function already exists that it throws an error
 	rt.function = fn
 
 	return rt

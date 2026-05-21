@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	sdk "github.com/SWC-GEKO/beaver/sdk/runtime"
 )
 
@@ -9,4 +11,8 @@ func main() {
 
 	rt.StatelessFunction("echo", "/Users/stahlco/GolandProjects/beaver/test/echo/")
 	rt.StatefulFunction("echo2", "/Users/stahlco/GolandProjects/beaver/test/echo2/")
+
+	if err := rt.Start(); err != nil {
+		log.Println(err)
+	}
 }
