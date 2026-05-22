@@ -1,4 +1,4 @@
-package runtime
+package sdk
 
 import (
 	"fmt"
@@ -23,7 +23,6 @@ func NewRuntime(host, port string) *Runtime {
 }
 
 func (rt *Runtime) Start() error {
-	//package and zip the function code and send it to the control-plane via http!
 	cnc, err := connect("localhost", "8080")
 	if err != nil {
 		return err

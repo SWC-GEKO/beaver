@@ -1,4 +1,4 @@
-package runtime
+package sdk
 
 const (
 	STATELESS = iota

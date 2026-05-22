@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/SWC-GEKO/beaver/pkg/controlplane"
+	"github.com/SWC-GEKO/beaver/internal/controlplane"
 )
 
 type server struct {
@@ -22,12 +22,18 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", s.health)
+	mux.HandleFunc("/upload", s.upload)
 
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatalln(err)
 	}
 }
 
-func (s *server) health(rw http.ResponseWriter, r *http.Request) {
+func (s *server) health(rw http.ResponseWriter, _ *http.Request) {
+	rw.WriteHeader(http.StatusOK)
+}
+
+func (s *server) upload(rw http.ResponseWriter, r *http.Request) {
+
 	rw.WriteHeader(http.StatusOK)
 }

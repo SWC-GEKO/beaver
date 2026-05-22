@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	sdk "github.com/SWC-GEKO/beaver/sdk/runtime"
+	"github.com/SWC-GEKO/beaver/sdk"
 )
 
 func main() {

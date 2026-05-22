@@ -1,4 +1,4 @@
-package runtime
+package sdk
 
 import (
 	"bytes"
@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SWC-GEKO/beaver/sdk/utils"
+	"github.com/SWC-GEKO/beaver/internal/utils"
 )
 
 // connection holds information about the connection to the control-plane.
