@@ -39,7 +39,7 @@ func (rt *Runtime) Start() error {
 func (rt *Runtime) StatelessFunction(name, path string) *Runtime {
 
 	if err := validateFunction(path, contracts.STATELESS); err != nil {
-		log.Printf("%s invalid runtime definition: %v", name, err)
+		log.Fatalf("%s invalid runtime definition: %v", name, err)
 	}
 
 	fn := function{
@@ -56,7 +56,7 @@ func (rt *Runtime) StatelessFunction(name, path string) *Runtime {
 func (rt *Runtime) StatefulFunction(name, path string) *Runtime {
 
 	if err := validateFunction(path, contracts.STATEFUL); err != nil {
-		log.Printf("%s invalid runtime definition: %v", name, err)
+		log.Fatalf("%s invalid runtime definition: %v", name, err)
 	}
 
 	fn := function{
@@ -65,7 +65,7 @@ func (rt *Runtime) StatefulFunction(name, path string) *Runtime {
 		functionType: contracts.STATEFUL,
 	}
 
-	// TODO: Add logic that if the function already exists that it throws an error
+	// TODO: Add logic that if the fn already exists that it throws an error
 	rt.function = fn
 
 	return rt
@@ -79,7 +79,7 @@ func validateFunction(path string, functionType int) error {
 	case contracts.STATEFUL:
 		ifaceFuncName = "StatefulFunction"
 	default:
-		return fmt.Errorf("function type is unknown")
+		return fmt.Errorf("fn type is unknown")
 	}
 
 	cfg := &packages.Config{
@@ -98,7 +98,7 @@ func validateFunction(path string, functionType int) error {
 	for _, pkg := range pkgs {
 		var iface *types.Interface
 		for _, i := range pkg.Types.Imports() {
-			if !(strings.Compare(i.Path(), "github.com/SWC-GEKO/beaver/sdk/spec") == 0) {
+			if !(strings.Compare(i.Path(), "github.com/SWC-GEKO/beaver/spec/api") == 0) {
 				continue
 			}
 

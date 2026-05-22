@@ -3,7 +3,7 @@ package echo2
 import (
 	"context"
 
-	"github.com/SWC-GEKO/beaver/sdk/api"
+	"github.com/SWC-GEKO/beaver/spec/api"
 )
 
 type Fn struct {

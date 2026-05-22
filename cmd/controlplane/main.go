@@ -37,29 +37,27 @@ func (s *server) health(rw http.ResponseWriter, _ *http.Request) {
 
 func (s *server) upload(rw http.ResponseWriter, r *http.Request) {
 	var data contracts.UploadRequest
-	var buf []byte
-	_, err := r.Body.Read(buf)
-	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-	}
 	defer r.Body.Close()
 
-	if err := json.Unmarshal(buf, &data); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		log.Printf("decoding incoming request: %v failed with err: %v", r.Body, err)
 		rw.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	switch data.Type {
 	case contracts.STATELESS:
-		if err = s.cp.UploadStateless(data.Name, data.Zip); err != nil {
-			// TODO: figure out which type of http-status is required => match error?
+		if err := s.cp.UploadStateless(data.Name, data.Zip); err != nil {
+			log.Println("uploading stateless fn failed with err: ", err)
 			rw.WriteHeader(http.StatusBadRequest)
-			_, _ = rw.Write([]byte(err.Error()))
+			return
 		}
-		// TODO: implement proper responses
 	case contracts.STATEFUL:
 		rw.WriteHeader(http.StatusNotImplemented)
+		return
 	default:
 		rw.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	rw.WriteHeader(http.StatusOK)
