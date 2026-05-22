@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SWC-GEKO/beaver/internal/utils"
+	"github.com/SWC-GEKO/beaver/spec/contracts"
 )
 
 // connection holds information about the connection to the control-plane.
@@ -49,11 +50,7 @@ func (c *connection) upload(rt *Runtime) error {
 		return err
 	}
 
-	data := struct {
-		Name string `json:"name"`
-		Type int    `json:"type"`
-		Zip  string `json:"zip"`
-	}{
+	data := contracts.UploadRequest{
 		Name: rt.function.name,
 		Type: rt.function.functionType,
 		Zip:  zip,

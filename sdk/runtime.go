@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/SWC-GEKO/beaver/spec/contracts"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -37,14 +38,14 @@ func (rt *Runtime) Start() error {
 
 func (rt *Runtime) StatelessFunction(name, path string) *Runtime {
 
-	if err := validateFunction(path, STATELESS); err != nil {
+	if err := validateFunction(path, contracts.STATELESS); err != nil {
 		log.Printf("%s invalid runtime definition: %v", name, err)
 	}
 
 	fn := function{
 		name:         name,
 		path:         path,
-		functionType: STATELESS,
+		functionType: contracts.STATELESS,
 	}
 
 	rt.function = fn
@@ -54,14 +55,14 @@ func (rt *Runtime) StatelessFunction(name, path string) *Runtime {
 
 func (rt *Runtime) StatefulFunction(name, path string) *Runtime {
 
-	if err := validateFunction(path, STATEFUL); err != nil {
+	if err := validateFunction(path, contracts.STATEFUL); err != nil {
 		log.Printf("%s invalid runtime definition: %v", name, err)
 	}
 
 	fn := function{
 		name:         name,
 		path:         path,
-		functionType: STATEFUL,
+		functionType: contracts.STATEFUL,
 	}
 
 	// TODO: Add logic that if the function already exists that it throws an error
@@ -73,9 +74,9 @@ func (rt *Runtime) StatefulFunction(name, path string) *Runtime {
 func validateFunction(path string, functionType int) error {
 	var ifaceFuncName string
 	switch functionType {
-	case STATELESS:
+	case contracts.STATELESS:
 		ifaceFuncName = "StatelessFunction"
-	case STATEFUL:
+	case contracts.STATEFUL:
 		ifaceFuncName = "StatefulFunction"
 	default:
 		return fmt.Errorf("function type is unknown")
@@ -97,7 +98,7 @@ func validateFunction(path string, functionType int) error {
 	for _, pkg := range pkgs {
 		var iface *types.Interface
 		for _, i := range pkg.Types.Imports() {
-			if !(strings.Compare(i.Path(), "github.com/SWC-GEKO/beaver/sdk/api") == 0) {
+			if !(strings.Compare(i.Path(), "github.com/SWC-GEKO/beaver/sdk/spec") == 0) {
 				continue
 			}
 
