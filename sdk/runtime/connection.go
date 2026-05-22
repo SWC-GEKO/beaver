@@ -1,9 +1,13 @@
 package runtime
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/SWC-GEKO/beaver/sdk/utils"
 )
 
 // connection holds information about the connection to the control-plane.
@@ -40,5 +44,37 @@ func connect(addr, port string) (*connection, error) {
 }
 
 func (c *connection) upload(rt *Runtime) error {
+	zip, err := utils.Zip(rt.function.path)
+	if err != nil {
+		return err
+	}
+
+	data := struct {
+		Name string `json:"name"`
+		Type int    `json:"type"`
+		Zip  string `json:"zip"`
+	}{
+		Name: rt.function.name,
+		Type: rt.function.functionType,
+		Zip:  zip,
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	var buf bytes.Buffer
+	buf.Write(jsonData)
+
+	url := fmt.Sprintf("http://%s:%s/upload", c.addr, c.port)
+	resp, err := c.client.Post(url, "application/json", &buf)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("upload failed with status: %s", resp.Status)
+	}
+
 	return nil
 }
