@@ -9,7 +9,6 @@ Quickstart
    ```Bash
    go mod init example.com/test
    ```
-TODO: diversify between stateful/stateless
 3. Create a `main.go` file with following contents
    ```Go
    package main
