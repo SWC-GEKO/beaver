@@ -3,38 +3,79 @@ An open-source FaaS (Function-as-a-Service) framework for writing portable Go-fu
 
 Quickstart
 ---
-1. Install Go
-2. Create a Go module:
+1. **Install Go**
+2. **Create a Go module:**
    > Note: You can use a different module name.
    ```Bash
    go mod init example.com/test
    ```
-3. Create a `main.go` file with following contents
+3. **Create a `function.go` file with following contents**
    ```Go
-   package main
+   package function
    
    import (
         "log"
         "context"
    
-        "github.com/SWC-GEKO/beaver/sdk"
+        beaver "github.com/SWC-GEKO/beaver/sdk"
         "github.com/SWC-GEKO/beaver/spec/api"
    )
    
-   // MyFunction must implement StatelessFunction
+   // init is required as it allows the platform to register the function
+   func init() {
+        beaver.Stateless("my-func", &MyFunction{})
+   }
+   
    type MyFunction struct {}
    
    func (m *MyFunction) Exec (ctx context.Context, e *api.Event) (*api.Event, error) {
-        // write your function-code here
-   }
-   
-   func main() {
-        r := runtime.New("localhost", "8080") // to connect with control-plane
-        r.StatelessFunction("test", "full/path/to/fn", &MyFunction{}) // TODO
-   
-        if err := r.Start(); err != nil {
-            panic(err)
-        }
+        // write your function-code here...
    }
    ```
+   
+4. **Create a `main.go` to upload the function - make sure that the ControlPlane is up and running.**
+   ```Go
+   package main
+   
+   import (
+        beaver "github.com/SWC-GEKO/beaver/sdk"
+        "github.com/SWC-GEKO/beaver/spec/contracts"
+   )
+   
+   func main() {
+      runtime := beaver.NewRuntime("127.0.0.1", "8080")
+      
+      runtime.Add("name", "path/to/fn", contracts.STATELESS)
+      
+      if err := runtime.Start(); err != nil { 
+         panic(err)
+      }
+   }
+   ```
+   Once the connection to the `Control-Plane` is established, the client-sdk uploads the Function-Code.
+   It wraps the User-Code in a Transport-Layer Component using `NATS` and builds it as a Docker-Container.
+   After building and deploying the Function, the `Control-Plane` returns the function's address.
+
+
+5. **Create a `client.go`** that publishes Messages.
+   ```Go
+   package client
+   
+   import (
+        "github.com/nats-io/nats.go"
+   )
+   
+   var url = "" // URL the Control-Plane returned
+   
+   func main() {
+       nc, err := nats.Connect(url, opts...)
+       if err != nil {
+           log.Fatal(err)
+       }
+       defer nc.Close()
+   
+	   // TODO: Define how users should send a Message
+   }
+   ```
+   
    
