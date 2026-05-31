@@ -16,7 +16,7 @@ type RegisteredFunction struct {
 }
 
 type Registry struct {
-	functions map[string]RegisteredFunction
+	function *RegisteredFunction
 }
 
 var defaultRegistry = New()
@@ -26,13 +26,11 @@ func Default() *Registry {
 }
 
 func New() *Registry {
-	return &Registry{
-		functions: make(map[string]RegisteredFunction),
-	}
+	return &Registry{}
 }
 
 func (r *Registry) Reset() {
-	r.functions = map[string]RegisteredFunction{}
+	r.function = nil
 }
 
 func (r *Registry) RegisterStateless(name string, s api.StatelessFunction) error {
@@ -40,7 +38,7 @@ func (r *Registry) RegisterStateless(name string, s api.StatelessFunction) error
 		return errors.New("function must have a name")
 	}
 
-	if _, ok := r.functions[name]; ok {
+	if r.function != nil {
 		return errors.New("function already exists in registry")
 	}
 
@@ -50,7 +48,7 @@ func (r *Registry) RegisterStateless(name string, s api.StatelessFunction) error
 		Stateless: s,
 	}
 
-	r.functions[f.Name] = f
+	r.function = &f
 	return nil
 }
 
@@ -59,7 +57,7 @@ func (r *Registry) RegisterStateful(name string, s api.StatefulFunction) error {
 		return errors.New("function must have a name")
 	}
 
-	if _, ok := r.functions[name]; ok {
+	if r.function != nil {
 		return errors.New("function already exists in registry")
 	}
 
@@ -69,21 +67,10 @@ func (r *Registry) RegisterStateful(name string, s api.StatefulFunction) error {
 		Stateful: s,
 	}
 
-	r.functions[f.Name] = f
+	r.function = &f
 	return nil
 }
 
-func (r *Registry) Get(name string) (RegisteredFunction, bool) {
-	f, ok := r.functions[name]
-	return f, ok
-}
-
-func (r *Registry) GetAll() []RegisteredFunction {
-	var fns []RegisteredFunction
-
-	for _, f := range r.functions {
-		fns = append(fns, f)
-	}
-
-	return fns
+func (r *Registry) Get() *RegisteredFunction {
+	return r.function
 }
