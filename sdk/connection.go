@@ -52,7 +52,7 @@ func (c *connection) upload(rt *Runtime) error {
 
 	data := contracts.UploadRequest{
 		Name: rt.function.name,
-		Type: rt.function.functionType,
+		Type: rt.function.fnType,
 		Zip:  zip,
 	}
 
