@@ -1,7 +1,9 @@
 package contracts
 
+type FunctionType int
+
 const (
-	STATELESS = iota
+	STATELESS FunctionType = iota
 	STATEFUL
 )
 
