@@ -1,4 +1,5 @@
-# Beaver 
+# Beaver
+<img src="resources/img.png" alt="drawing"/>
 An open-source FaaS (Function-as-a-Service) framework for writing portable Go-functions on the Beaver-Platform.
 
 Quickstart
