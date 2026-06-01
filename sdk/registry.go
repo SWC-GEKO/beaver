@@ -71,6 +71,8 @@ func (r *Registry) RegisterStateful(name string, s api.StatefulFunction) error {
 	return nil
 }
 
-func (r *Registry) Get() *RegisteredFunction {
-	return r.function
+// Get returns a copy of the underlying function. This is required as each nats-topic gets consumed by a single thread!
+
+func (r *Registry) Get() RegisteredFunction {
+	return *r.function
 }
