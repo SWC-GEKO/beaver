@@ -36,7 +36,8 @@
    }
    ```
    
-   > [!WARNING]
+   > ⚠️ **Warning**
+   > 
    > It is required to write the core function-code in `package main` and you must write a `init()`-Function,
    > as it allows the platform to register the function and execute the code.
    
