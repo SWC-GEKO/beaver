@@ -1,9 +1,13 @@
-# Beaver
-<img src="resources/img.png" alt="drawing"/>
-An open-source FaaS (Function-as-a-Service) framework for writing portable Go-functions on the Beaver-Platform.
+<p>
+   <img src="resources/img.png" alt="drawing"/>
+</p>
 
-Quickstart
----
+<h1 align="center">Beaver</h1>
+
+<p align="center">An open-source FaaS (Function-as-a-Service) framework for writing portable Go-functions on the Beaver-Platform.</p>
+
+
+## Quickstart
 1. **Install Go**
 2. **Create a Go module:**
    > Note: You can use a different module name.
