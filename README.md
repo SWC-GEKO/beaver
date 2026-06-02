@@ -38,8 +38,7 @@
    
    > ⚠️ **Warning**
    > 
-   > It is required to write the core function-code in `package main` and you must write a `init()`-Function,
-   > as it allows the platform to register the function and execute the code.
+   > The function code must be written in `package main`, and an `init()` function is required. The platform uses `init()` to automatically register and execute the function at runtime.
    
 4. **Create a `main.go`, in a different directory, to upload the function - make sure that the ControlPlane is up and running.**
    ```Go
