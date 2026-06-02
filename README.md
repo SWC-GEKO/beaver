@@ -10,13 +10,11 @@
 ## Quickstart
 1. **Install Go**
 2. **Create a Go module:**
-   > Note: You can use a different module name.
    ```Bash
-   go mod init example.com/test
-   ```
+   go mod init <module-name>
 3. **Create a `function.go` file with following contents**
    ```Go
-   package function
+   package main
    
    import (
         "log"
@@ -26,7 +24,7 @@
         "github.com/SWC-GEKO/beaver/spec/api"
    )
    
-   // init is required as it allows the platform to register the function
+
    func init() {
         beaver.Stateless("my-func", &MyFunction{})
    }
@@ -37,8 +35,11 @@
         // write your function-code here...
    }
    ```
+   > [!CAUTION] Important Contract Rules:
+   > It is required to write the core function-code in `package main` and you must write a `init()`-Function,
+   > as it allows the platform to register the function and execute the code.
    
-4. **Create a `main.go` to upload the function - make sure that the ControlPlane is up and running.**
+4. **Create a `main.go`, in a different directory, to upload the function - make sure that the ControlPlane is up and running.**
    ```Go
    package main
    
@@ -50,7 +51,7 @@
    func main() {
       runtime := beaver.NewRuntime("127.0.0.1", "8080")
       
-      runtime.Add("name", "path/to/fn", contracts.STATELESS)
+      runtime.Add("name", "fullpath/to/fn", contracts.STATELESS)
       
       if err := runtime.Start(); err != nil { 
          panic(err)
