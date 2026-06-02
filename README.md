@@ -2,7 +2,7 @@
    <img src="resources/img.png" alt="drawing"/>
 </p>
 
-<h1 align="center">Beaver</h1>
+<h1 align="center">Beaver - a Serverless Platform</h1>
 
 <p align="center">An open-source FaaS (Function-as-a-Service) framework for writing portable Go-functions on the Beaver-Platform.</p>
 
