@@ -60,7 +60,16 @@ func main() {
 	)
 	defer stop()
 
-	// TODO: implement health-check
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", health)
+
+	serverErrChan := make(chan error)
+
+	go func() {
+		if err = http.ListenAndServe(":8080", mux); err != nil {
+			serverErrChan <- err
+		}
+	}()
 
 	var wg sync.WaitGroup
 
@@ -75,8 +84,12 @@ func main() {
 		}(s, f)
 	}
 
-	<-ctx.Done()
-	log.Println("shutdown requested")
+	select {
+	case <-ctx.Done():
+		log.Println("shutdown requested")
+	case err = <-serverErrChan:
+		log.Fatalf("http server failed: %v", err)
+	}
 
 	wg.Wait()
 
