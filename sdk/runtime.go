@@ -39,7 +39,7 @@ func (rt *Runtime) Start() error {
 	return nil
 }
 
-func (rt *Runtime) Upload(name string, path string, functionType contracts.FunctionType) {
+func (rt *Runtime) Add(name string, path string, functionType contracts.FunctionType) {
 	if rt.function != nil {
 		log.Fatalf("runtime has already a Function registered")
 	}
