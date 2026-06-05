@@ -33,16 +33,20 @@ type Handler struct {
 }
 
 func main() {
-
 	cfg, err := LoadConfigFromEnv()
 	if err != nil {
 		log.Fatalf("error occurred loading config from env: %s", err)
 	}
 
+	log.SetPrefix(cfg.Name + ": ")
+	log.SetFlags(log.LstdFlags)
+
 	h, err := New(*cfg)
 	if err != nil {
 		log.Fatalf("not able to create function handler, aborting: %s", err)
 	}
+
+	log.Println(h.Nats.Status())
 
 	var subs []*nats.Subscription
 	for _, t := range h.SubTopics {
@@ -75,6 +79,10 @@ func main() {
 
 	for _, s := range subs {
 		f := h.Registry.Get().Stateless
+
+		if f == nil {
+			log.Println("function is nil, aborting")
+		}
 
 		wg.Add(1)
 		go func(sub *nats.Subscription, fn api.StatelessFunction) {
@@ -116,6 +124,8 @@ func New(cfg Config) (*Handler, error) {
 // EventLoop is the core loop of the function, as it handles the nats-Subscription and the routing layer
 func (h *Handler) EventLoop(ctx context.Context, sub *nats.Subscription, fn api.StatelessFunction) {
 	defer sub.Unsubscribe()
+
+	log.Println("starting event-loop for topic: ", sub.Subject)
 
 	for msg := range sub.Msgs() {
 		select {
@@ -162,7 +172,6 @@ func (h *Handler) EventLoop(ctx context.Context, sub *nats.Subscription, fn api.
 }
 
 func LoadConfigFromEnv() (*Config, error) {
-
 	name := os.Getenv("NAME")
 	if name == "" {
 		return nil, errors.New("name must be set")
@@ -203,7 +212,6 @@ func LoadConfigFromEnv() (*Config, error) {
 }
 
 func parseMsgToEvent(msg *nats.Msg) (*api.Event, error) {
-	// TODO: implement correct functionality!
 	return &api.Event{
 		Body: msg.Data,
 	}, nil

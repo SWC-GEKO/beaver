@@ -1,0 +1,30 @@
+services:
+  nats:
+    image: nats
+    container_name: nats
+    command: ["-m", "8222"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+
+  processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stateless_processor
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      NAME: stateless_processor
+      NATS_ADDR: nats:4222
+      SUB_TOPICS: fn.ingress
+      PUB_TOPIC: fn.out
+      DLQ_TOPIC: fn.dlq
+    depends_on:
+      nats:
+        condition: service_started
+
+networks:
+  fn:
+    name: fn

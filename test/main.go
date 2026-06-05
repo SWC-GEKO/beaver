@@ -1,18 +1,35 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"time"
 
-	"github.com/SWC-GEKO/beaver/sdk"
-	"github.com/SWC-GEKO/beaver/spec/contracts"
+	"github.com/nats-io/nats.go"
 )
 
 func main() {
-	rt := sdk.NewRuntime("localhost", "8080")
+	nc, err := nats.Connect("nats://localhost:4222")
+	if err != nil {
+		panic(err)
+	}
 
-	rt.Add("my-func", "/Users/stahlco/GolandProjects/beaver/test/echo", contracts.STATELESS)
+	log.Println(nc.Status())
 
-	if err := rt.Start(); err != nil {
-		log.Println(err)
+	ticker := time.NewTicker(1 * time.Second)
+	timer := time.NewTimer(20 * time.Second)
+
+	counter := 0
+	for {
+		select {
+		case <-timer.C:
+			log.Println("finished execution")
+			return
+		case <-ticker.C:
+			if err = nc.Publish("fn.ingress", []byte(fmt.Sprintf("hello-%d", counter))); err != nil {
+				panic(err)
+			}
+			counter++
+		}
 	}
 }
