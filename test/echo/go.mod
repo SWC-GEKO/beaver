@@ -1,4 +1,4 @@
-module echo
+module fn
 
 go 1.26.1
 
