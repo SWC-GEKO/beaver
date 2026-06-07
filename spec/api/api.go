@@ -3,7 +3,7 @@ package api
 import "context"
 
 type Event struct {
-	Headers map[string]any
+	Headers map[string]string
 	Body    []byte
 }
 
@@ -15,7 +15,6 @@ type StatelessFunction interface {
 }
 
 type StatefulFunction interface {
-	KeyBy(ctx context.Context, event Event) (any, error)
 	Exec(ctx context.Context, state *State, event *Event) (*Event, error)
 }
 
