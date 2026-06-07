@@ -1,4 +1,12 @@
 services:
+  local-nats:
+    image: nats:latest
+    container_name: local-nats
+    restart: unless-stopped
+    command: ["-js"]
+    networks:
+      - local-net
+
   router:
     build:
       context: ./router
@@ -13,8 +21,14 @@ services:
       GLOBAL_NATS: "nats://nats-global:4222"
       GLOBAL_STREAM: "FUNCTIONS"
       GLOBAL_TOPIC: "functions.test"
+      LOCAL_NATS: "nats://local-nats:4222"
       LOCAL_TOPIC: "fn"
       SHARDS: 1
+    depends_on:
+      local-nats:
+        condition: service_started
+      processor:
+        condition: service_started
 
 
   processor:
@@ -27,12 +41,12 @@ services:
       - local-net
     environment:
       NAME: "test_processor"
-      NATS_ADDR: "nats://router:4222"
+      NATS_ADDR: "nats://local-nats:4222"
       SUB_TOPICS: "fn.0"
       PUB_TOPIC: "fn.out"
       DLQ_TOPIC: "fn.dlq"
     depends_on:
-      router:
+      local-nats:
         condition: service_started
 
 networks:

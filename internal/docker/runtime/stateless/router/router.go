@@ -8,9 +8,7 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
-	"time"
 
-	"github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 )
@@ -21,6 +19,7 @@ var (
 	GlobalStream  string
 	GlobalSubject string
 
+	LocalNatsAddr  string
 	LocalBaseTopic string
 	VirtualShards  int
 )
@@ -108,22 +107,9 @@ func (r *Router) RouteEvents(ctx context.Context) error {
 	return nil
 }
 
-// TODO: implement JetStream
 func main() {
 	LoadEnvVars()
-	s, err := server.NewServer(&server.Options{
-		JetStream: true,
-	})
-	if err != nil {
-		panic(err)
-	}
-	go s.Start()
-
-	if !s.ReadyForConnections(5 * time.Second) {
-		panic("local message bus (nats) didn't start in 5s, aborting")
-	}
-
-	l, err := nats.Connect("nats://localhost:4222")
+	l, err := nats.Connect(LocalNatsAddr)
 	if err != nil {
 		panic(err)
 	}
@@ -169,6 +155,11 @@ func LoadEnvVars() {
 	GlobalSubject = os.Getenv("GLOBAL_TOPIC")
 	if GlobalSubject == "" {
 		panic("global subject must be set")
+	}
+
+	LocalNatsAddr = os.Getenv("LOCAL_NATS")
+	if LocalNatsAddr == "" {
+		panic("local nats address must be set")
 	}
 
 	LocalBaseTopic = os.Getenv("LOCAL_TOPIC")
