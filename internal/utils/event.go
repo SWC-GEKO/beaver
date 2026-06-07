@@ -21,10 +21,23 @@ func ParseEventFromMsg(msg *nats.Msg) *api.Event {
 	var e api.Event
 	e.Body = msg.Data
 	for k, v := range msg.Header {
-		e.Headers[k] = v
+		e.Headers[k] = v[0]
 	}
 
 	return &e
+}
+
+func ParseMsgFromEvent(topic string, e *api.Event) *nats.Msg {
+	var msg nats.Msg
+	msg.Data = e.Body
+
+	for k, v := range e.Headers {
+		msg.Header.Set(k, v)
+	}
+
+	msg.Subject = topic
+
+	return &msg
 }
 
 func GetShard(key string, vshards int) int {
