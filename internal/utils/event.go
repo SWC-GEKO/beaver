@@ -6,10 +6,11 @@ import (
 	"github.com/SWC-GEKO/beaver/spec/api"
 	"github.com/cespare/xxhash/v2"
 	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 )
 
-func GetKeyFromMsg(msg *nats.Msg) (string, error) {
-	k := msg.Header.Get("Key")
+func GetKeyFromMsg(msg jetstream.Msg) (string, error) {
+	k := msg.Headers().Get("Key")
 	if k == "" {
 		return "", errors.New("message does not have a dedicated key")
 	}
@@ -17,10 +18,10 @@ func GetKeyFromMsg(msg *nats.Msg) (string, error) {
 	return k, nil
 }
 
-func ParseEventFromMsg(msg *nats.Msg) *api.Event {
+func ParseEventFromMsg(msg jetstream.Msg) *api.Event {
 	var e api.Event
-	e.Body = msg.Data
-	for k, v := range msg.Header {
+	e.Body = msg.Data()
+	for k, v := range msg.Headers() {
 		e.Headers[k] = v[0]
 	}
 
