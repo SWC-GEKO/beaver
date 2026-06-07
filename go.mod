@@ -3,6 +3,7 @@ module github.com/SWC-GEKO/beaver
 go 1.26.1
 
 require (
+	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/docker/go-sdk/client v0.1.0-alpha013
 	github.com/google/uuid v1.6.0
 	github.com/nats-io/nats.go v1.52.0
