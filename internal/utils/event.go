@@ -17,14 +17,14 @@ func GetKeyFromMsg(msg *nats.Msg) (string, error) {
 	return k, nil
 }
 
-func ParseEventFromMsg(msg *nats.Msg) (*api.Event, error) {
+func ParseEventFromMsg(msg *nats.Msg) *api.Event {
 	var e api.Event
 	e.Body = msg.Data
 	for k, v := range msg.Header {
 		e.Headers[k] = v
 	}
 
-	return &e, nil
+	return &e
 }
 
 func GetShard(key string, vshards int) int {
