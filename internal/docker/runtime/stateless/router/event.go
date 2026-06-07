@@ -1,4 +1,4 @@
-package utils
+package main
 
 import (
 	"errors"
@@ -33,7 +33,7 @@ func ParseMsgFromEvent(topic string, e *api.Event) *nats.Msg {
 	msg.Data = e.Body
 
 	for k, v := range e.Headers {
-		msg.Header.Set(k, v)
+		msg.Header.Set(k, v.(string))
 	}
 
 	msg.Subject = topic

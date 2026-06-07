@@ -1,0 +1,16 @@
+services:
+  nats-global:
+    image: nats:latest
+    container_name: nats_global
+    command: ["-js", "-m", "8222"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    networks:
+      - global-net
+
+
+networks:
+  global-net:
+    external: true
+

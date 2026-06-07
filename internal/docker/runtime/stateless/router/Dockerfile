@@ -6,10 +6,8 @@ COPY . .
 
 RUN go mod tidy
 RUN go mod download
-RUN go build -o handler .
+RUN go build -o router .
 
-EXPOSE 8000
+EXPOSE 4222
 
-CMD ["./handler"]
-
-
+CMD ["./router"]

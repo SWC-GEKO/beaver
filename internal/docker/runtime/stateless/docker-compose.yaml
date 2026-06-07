@@ -1,30 +1,42 @@
 services:
-  nats:
-    image: nats
-    container_name: nats
-    command: ["-m", "8222"]
-    ports:
-      - "4222:4222"
-      - "8222:8222"
+  router:
+    build:
+      context: ./router
+      dockerfile: Dockerfile
+    container_name: router
+    restart: unless-stopped
+    networks:
+      - global-net
+      - local-net
+    environment:
+      NAME: "test"
+      GLOBAL_NATS: "nats://nats-global:4222"
+      GLOBAL_STREAM: "FUNCTIONS"
+      GLOBAL_TOPIC: "functions.test"
+      LOCAL_TOPIC: "fn"
+      SHARDS: 1
+
 
   processor:
     build:
-      context: .
+      context: ./processor
       dockerfile: Dockerfile
     container_name: stateless_processor
     restart: unless-stopped
-    ports:
-      - "8090:8090"
+    networks:
+      - local-net
     environment:
-      NAME: stateless_processor
-      NATS_ADDR: nats:4222
-      SUB_TOPICS: fn.ingress
+      NAME: "test_processor"
+      NATS_ADDR: "nats://router:4222"
+      SUB_TOPICS: fn.1
       PUB_TOPIC: fn.out
       DLQ_TOPIC: fn.dlq
     depends_on:
-      nats:
+      router:
         condition: service_started
 
 networks:
-  fn:
-    name: fn
+  local-net:
+    driver: bridge
+  global-net:
+    external: true
