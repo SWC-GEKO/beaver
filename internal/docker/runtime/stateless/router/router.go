@@ -40,6 +40,8 @@ func New(globalBusAddr, globalTopic, globalJetStream, baseTopic string, vShards 
 		return nil, err
 	}
 
+	log.Println(nc.Status())
+
 	shards := make([]string, vShards)
 	for i := 0; i < vShards; i++ {
 		shards[i] = fmt.Sprintf("%s.%d", baseTopic, i)
@@ -60,7 +62,8 @@ func (r *Router) RouteEvents(ctx context.Context) error {
 		return err
 	}
 
-	// js.OrderedConsumer()?
+	log.Println("started to consume from jetstream")
+
 	cons, err := js.CreateOrUpdateConsumer(ctx, r.GlobalJetStream, jetstream.ConsumerConfig{
 		AckPolicy:     jetstream.AckExplicitPolicy, // requires to acknowledge every message
 		FilterSubject: r.GlobalSubject,
@@ -70,6 +73,7 @@ func (r *Router) RouteEvents(ctx context.Context) error {
 	}
 
 	conCtx, err := cons.Consume(func(msg jetstream.Msg) {
+		log.Printf("consumed message: %+v", msg)
 		k, err := GetKeyFromMsg(msg)
 		if err != nil {
 			log.Println("fetching key from message failed with: ", err)
@@ -83,9 +87,13 @@ func (r *Router) RouteEvents(ctx context.Context) error {
 			Data:    msg.Data(),
 		}
 
+		log.Printf("%+v", pubMsg)
+
 		if err = r.LocalNats.PublishMsg(&pubMsg); err != nil {
 			log.Println("publishing message to local nats failed with: ", err)
 		}
+
+		log.Println("published msg to local NATS")
 
 		if err = msg.Ack(); err != nil {
 			log.Println("acknowledging message failed with: ", err)
@@ -100,9 +108,12 @@ func (r *Router) RouteEvents(ctx context.Context) error {
 	return nil
 }
 
+// TODO: implement JetStream
 func main() {
 	LoadEnvVars()
-	s, err := server.NewServer(&server.Options{})
+	s, err := server.NewServer(&server.Options{
+		JetStream: true,
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -117,17 +128,17 @@ func main() {
 		panic(err)
 	}
 
-	router, err := New(GlobalNats, GlobalSubject, GlobalStream, LocalBaseTopic, VirtualShards, l)
-	if err != nil {
-		panic(err)
-	}
-
 	ctx, stop := signal.NotifyContext(
 		context.Background(),
 		os.Interrupt,
 		syscall.SIGTERM,
 	)
 	defer stop()
+
+	router, err := New(GlobalNats, GlobalSubject, GlobalStream, LocalBaseTopic, VirtualShards, l)
+	if err != nil {
+		panic(err)
+	}
 
 	if err = router.RouteEvents(ctx); err != nil {
 		panic(err)

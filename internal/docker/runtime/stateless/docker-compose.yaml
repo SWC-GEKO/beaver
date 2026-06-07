@@ -28,9 +28,9 @@ services:
     environment:
       NAME: "test_processor"
       NATS_ADDR: "nats://router:4222"
-      SUB_TOPICS: fn.1
-      PUB_TOPIC: fn.out
-      DLQ_TOPIC: fn.dlq
+      SUB_TOPICS: "fn.0"
+      PUB_TOPIC: "fn.out"
+      DLQ_TOPIC: "fn.dlq"
     depends_on:
       router:
         condition: service_started

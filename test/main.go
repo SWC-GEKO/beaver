@@ -26,7 +26,14 @@ func main() {
 			log.Println("finished execution")
 			return
 		case <-ticker.C:
-			if err = nc.Publish("fn.ingress", []byte(fmt.Sprintf("hello-%d", counter))); err != nil {
+			h := make(nats.Header)
+			h["Key"] = []string{"user-1"}
+			msg := &nats.Msg{
+				Subject: "functions.test",
+				Header:  h,
+				Data:    []byte(fmt.Sprintf("hello-%d", counter)),
+			}
+			if err = nc.PublishMsg(msg); err != nil {
 				panic(err)
 			}
 			counter++
