@@ -9,6 +9,22 @@ services:
     networks:
       - global-net
 
+  nats-init:
+    image: natsio/nats-box:latest
+    networks:
+      - global-net
+    depends_on:
+      nats-global:
+        condition: service_started
+    command:
+      - sh
+      - -c
+      - |
+        echo "Testing connectivity..."
+        nats server ping --server nats://nats-global:4222
+        
+        echo "Creating stream..."
+        nats stream add FUNCTIONS --subjects "FUNCTIONS.>" --storage file --defaults --max-age 15m --server nats://nats-global:4222
 
 networks:
   global-net:

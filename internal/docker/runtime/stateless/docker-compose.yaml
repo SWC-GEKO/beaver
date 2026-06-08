@@ -20,7 +20,7 @@ services:
       NAME: "test"
       GLOBAL_NATS: "nats://nats-global:4222"
       GLOBAL_STREAM: "FUNCTIONS"
-      GLOBAL_TOPIC: "functions.test"
+      GLOBAL_TOPIC: "FUNCTIONS.test"
       LOCAL_NATS: "nats://local-nats:4222"
       LOCAL_TOPIC: "fn"
       SHARDS: 1
