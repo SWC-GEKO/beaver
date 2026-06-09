@@ -9,8 +9,8 @@ services:
 
   router:
     build:
-      context: ./router
-      dockerfile: Dockerfile
+      context: router
+      dockerfile: router/Dockerfile
     container_name: router
     restart: unless-stopped
     networks:
@@ -33,8 +33,8 @@ services:
 
   processor:
     build:
-      context: ./processor
-      dockerfile: Dockerfile
+      context: processor
+      dockerfile: processor/Dockerfile
     container_name: stateless_processor
     restart: unless-stopped
     networks:
