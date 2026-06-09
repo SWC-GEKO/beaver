@@ -6,9 +6,9 @@ import (
 	"os"
 	"path"
 	"sync"
+	"time"
 
 	"github.com/SWC-GEKO/beaver/internal/docker"
-	"github.com/SWC-GEKO/beaver/internal/fn"
 	"github.com/SWC-GEKO/beaver/internal/utils"
 	"github.com/google/uuid"
 )
@@ -19,13 +19,21 @@ const (
 
 type ControlPlane struct {
 	id        string
-	functions map[string]fn.Function
+	functions map[string]docker.Function
 	fnMtx     sync.Mutex
 	docker    docker.Docker
 }
 
+func New(id string) *ControlPlane {
+	return &ControlPlane{
+		id:        id,
+		functions: make(map[string]docker.Function),
+		fnMtx:     sync.Mutex{},
+		docker:    docker.NewDocker(),
+	}
+}
+
 func (cp *ControlPlane) UploadStateless(name string, fnZip string) error {
-	// TODO: implement name checks
 	zip, err := base64.StdEncoding.DecodeString(fnZip)
 	if err != nil {
 		return err
@@ -64,32 +72,13 @@ func (cp *ControlPlane) UploadStateless(name string, fnZip string) error {
 		}
 	}()
 
-	cp.fnMtx.Lock()
-	var oldF fn.Function
-	if exF, ok := cp.functions[name]; ok {
-		oldF = exF
-	}
-	cp.fnMtx.Unlock()
-
-	f, err := cp.docker.Create() // TODO: implement a proper create function
+	f, err := cp.docker.Create(name, p)
 	if err != nil {
 		return err
 	}
 
-	cp.fnMtx.Lock()
-	cp.functions[name] = f
-	if err = cp.functions[name].Start(); err != nil {
-		return err
-	}
-	cp.fnMtx.Unlock()
+	log.Println(f.UniqueName)
 
-	// TODO: implement function to tell RProxy about new function
-
-	if oldF != nil {
-		if err = oldF.Stop(); err != nil {
-			return err
-		}
-	}
-
+	time.Sleep(10 * time.Second)
 	return nil
 }
