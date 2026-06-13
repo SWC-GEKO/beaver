@@ -1,8 +1,7 @@
-package fn
+package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 
 	beaver "github.com/SWC-GEKO/beaver/sdk"
@@ -16,15 +15,6 @@ func init() {
 type Function struct{}
 
 func (f *Function) Exec(ctx context.Context, event *api.Event) (*api.Event, error) {
-	data := struct {
-		Text string `json:"text"`
-	}{}
-
-	if err := json.Unmarshal(event.Body, &data); err != nil {
-		return nil, err
-	}
-
-	log.Println("Received: ", data.Text)
-
+	log.Printf("Received: %s", event.Body)
 	return event, nil
 }

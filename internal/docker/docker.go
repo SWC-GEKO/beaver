@@ -17,6 +17,7 @@ type Docker struct {
 }
 
 func NewDocker() Docker {
+	// TODO: implement a feature that the router is going to be built!
 	return Docker{}
 }
 
@@ -33,21 +34,21 @@ func (d *Docker) Create(name string, filedir string) (*Function, error) {
 		return nil, fmt.Errorf("creating unique-function directory failed with error: %v", err)
 	}
 
-	processorPath := path.Join("runtimes", "processor")
+	processorPath := "internal/docker/runtime/processor"
 
-	if err = utils.CopyDir(processorPath, filePath); err != nil {
+	if err = utils.CopyAll(processorPath, filePath); err != nil {
 		return nil, fmt.Errorf("copying the handler-code into the unique directory failed with error: %v", err)
 	}
 
-	if err = utils.CopyAll(filedir, processorPath); err != nil {
+	if err = utils.CopyAll(filedir, filePath); err != nil {
 		return nil, fmt.Errorf("copying function-code into the directory failed with err: %v", err)
 	}
 
-	return &Function{
-		UniqueName: uniqueName,
-	}, nil
+	d.BuildImage()
+
+	return &Function{}, nil
 }
 
-func (d *Docker) BuildImage() (*Image, error) {
-	panic("implement me...")
+func (d *Docker) BuildImage() {
+
 }

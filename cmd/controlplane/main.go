@@ -7,6 +7,7 @@ import (
 
 	"github.com/SWC-GEKO/beaver/internal/controlplane"
 	"github.com/SWC-GEKO/beaver/spec/contracts"
+	"github.com/google/uuid"
 )
 
 type server struct {
@@ -19,7 +20,9 @@ func main() {
 	log.SetPrefix("controlplane: ")
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
 
-	s := server{}
+	s := server{
+		cp: controlplane.New(uuid.New().String()),
+	}
 
 	mux := http.NewServeMux()
 
