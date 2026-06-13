@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/SWC-GEKO/beaver/internal/utils"
 	"github.com/SWC-GEKO/beaver/spec/contracts"
@@ -22,7 +21,6 @@ type connection struct {
 func connect(addr, port string) (*connection, error) {
 	client := http.Client{
 		Transport: http.DefaultTransport,
-		Timeout:   10 * time.Second,
 	}
 
 	url := fmt.Sprintf("http://%s:%s/health", addr, port)

@@ -1,13 +1,17 @@
 package docker
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"os"
 	"path"
 
 	"github.com/SWC-GEKO/beaver/internal/utils"
 	"github.com/docker/go-sdk/client"
+	"github.com/docker/go-sdk/image"
 	uuid2 "github.com/google/uuid"
+	moby "github.com/moby/moby/client"
 )
 
 const TmpDir = "./tmp"
@@ -21,7 +25,7 @@ func NewDocker() Docker {
 	return Docker{}
 }
 
-func (d *Docker) Create(name string, filedir string) (*Function, error) {
+func (d *Docker) Create(ctx context.Context, name string, filedir string) (*Function, error) {
 	uuid, err := uuid2.NewRandom()
 	if err != nil {
 		return nil, err
@@ -44,11 +48,38 @@ func (d *Docker) Create(name string, filedir string) (*Function, error) {
 		return nil, fmt.Errorf("copying function-code into the directory failed with err: %v", err)
 	}
 
-	d.BuildImage()
+	// Building the Processor
+	// TODO: version should be passed by the user
+	tag, err := d.BuildImage(ctx, uniqueName, "", filePath)
+	if err != nil {
+		return nil, fmt.Errorf("building image failed with err: %v", err)
+	}
+
+	log.Println("Created processor image with tag: ", tag)
 
 	return &Function{}, nil
 }
 
-func (d *Docker) BuildImage() {
+func (d *Docker) BuildImage(ctx context.Context, name, version, dir string) (string, error) {
+	if version == "" {
+		version = "latest"
+	}
 
+	log.Println(dir)
+
+	r, err := image.ArchiveBuildContext(dir, "Dockerfile")
+	if err != nil {
+		return "", err
+	}
+
+	opts := image.WithBuildOptions(moby.ImageBuildOptions{
+		Dockerfile: "Dockerfile",
+	})
+
+	tag, err := image.Build(ctx, r, fmt.Sprintf("%s:%s", name, version), opts)
+	if err != nil {
+		return "", err
+	}
+
+	return tag, nil
 }

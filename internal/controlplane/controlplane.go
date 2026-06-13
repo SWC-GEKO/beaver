@@ -1,6 +1,7 @@
 package controlplane
 
 import (
+	"context"
 	"encoding/base64"
 	"log"
 	"os"
@@ -72,7 +73,9 @@ func (cp *ControlPlane) UploadStateless(name string, fnZip string) error {
 		}
 	}()
 
-	f, err := cp.docker.Create(name, p)
+	//TODO: check if context is correct here!
+	ctx := context.Background()
+	f, err := cp.docker.Create(ctx, name, p)
 	if err != nil {
 		return err
 	}
