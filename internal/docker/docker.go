@@ -57,7 +57,12 @@ func (d *Docker) Create(ctx context.Context, name string, filedir string) (*Func
 
 	log.Println("Created processor image with tag: ", tag)
 
-	return &Function{}, nil
+	f := Function{
+		UniqueName: uniqueName,
+		ImageTag:   tag,
+	}
+
+	return &f, nil
 }
 
 func (d *Docker) BuildImage(ctx context.Context, name, version, dir string) (string, error) {

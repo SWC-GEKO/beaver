@@ -34,6 +34,15 @@ func New(id string) *ControlPlane {
 	}
 }
 
+func (cp *ControlPlane) Start() error {
+	// 1. We need to connect to the global NATS!
+	// 2. We need to build the images -> first check if router for example is already built!
+	// 3. Start HTTP-Server and listen to incoming Upload-Requests
+	// 4. Start NATS-Observer
+
+	return nil
+}
+
 func (cp *ControlPlane) UploadStateless(name string, fnZip string) error {
 	zip, err := base64.StdEncoding.DecodeString(fnZip)
 	if err != nil {

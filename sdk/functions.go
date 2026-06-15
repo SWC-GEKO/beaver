@@ -12,7 +12,7 @@ func Stateless(name string, function api.StatelessFunction) {
 	}
 }
 
-// TODO: Stateful-Functions are not fully implemented -> maybe the API will change
+// TODO: Stateful-functions are not fully implemented -> maybe the API will change
 
 func Stateful(name string, function api.StatefulFunction) {
 	if err := Default().RegisterStateful(name, function); err != nil {
