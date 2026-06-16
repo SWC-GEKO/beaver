@@ -9,7 +9,6 @@ import (
 
 	"github.com/SWC-GEKO/beaver/internal/docker"
 	"github.com/compose-spec/compose-go/v2/types"
-	"github.com/nats-io/nats.go"
 )
 
 type Composer struct {
@@ -72,6 +71,14 @@ func (c *Composer) Add(f *docker.Function) error {
 
 		subTopics := calcTopics(f.MaxShards, i, f.Replication, localBaseTopic)
 
+		processorEnv := types.NewMappingWithEquals([]string{
+			fmt.Sprintf("NAME=%s", name),
+			fmt.Sprintf("NATS_ADDR=nats://%s:4222", services["nats"].Name),
+			fmt.Sprintf("SUB_TOPICS=%s", strings.Join(subTopics, ",")),
+			fmt.Sprintf("PUB_TOPIC=%s.out", localBaseTopic),
+			fmt.Sprintf("DLQ_TOPIC=%s.dlq", localBaseTopic),
+		})
+
 		processors[i] = types.ServiceConfig{
 			Name:          name,
 			ContainerName: name,
@@ -80,14 +87,8 @@ func (c *Composer) Add(f *docker.Function) error {
 					Condition: "service_started",
 				},
 			},
-			Environment: types.MappingWithEquals{
-				"NAME":       &name,
-				"NATS_ADDR":  new(fmt.Sprintf("nats://%s:4222", nats.Name)),
-				"SUB_TOPICS": new(strings.Join(subTopics, ",")),
-				"PUB_TOPIC":  new(fmt.Sprintf("%s.out", localBaseTopic)),
-				"DLQ_TOPIC":  new(fmt.Sprintf("%s.dlq", localBaseTopic)),
-			},
-			Image: f.ImageTag,
+			Environment: processorEnv,
+			Image:       f.ImageTag,
 			Networks: map[string]*types.ServiceNetworkConfig{
 				"local-net": {},
 			},
@@ -107,20 +108,24 @@ func (c *Composer) Add(f *docker.Function) error {
 		Condition: "service_started",
 	}
 
+	routerEnv := types.NewMappingWithEquals(
+		[]string{
+			fmt.Sprintf("NAME=%s-router", f.UniqueName),
+			fmt.Sprintf("GLOBAL_NATS=nats://%s:4222", c.GlobalNatsServiceName),
+			fmt.Sprintf("GLOBAL_STREAM=%s", c.GlobalNatsStream),
+			fmt.Sprintf("GLOBAL_TOPIC=%s.%s", c.GlobalNatsStream, f.UniqueName),
+			fmt.Sprintf("LOCAL_NATS=nats://%s:4222", services["nats"].Name),
+			fmt.Sprintf("LOCAL_TOPIC=%s", localBaseTopic),
+			fmt.Sprintf("SHARDS=%s", strconv.Itoa(f.MaxShards)),
+		},
+	)
+
 	services["router"] = types.ServiceConfig{
 		Name:          "router",
 		ContainerName: "router",
 		DependsOn:     dependencies,
-		Environment: types.MappingWithEquals{
-			"NAME":          new(fmt.Sprintf("%s-router", f.UniqueName)),
-			"GLOBAL_NATS":   new(fmt.Sprintf("nats://%s:4222", c.GlobalNatsServiceName)),
-			"GLOBAL_STREAM": &c.GlobalNatsStream,
-			"GLOBAL_TOPIC":  new(fmt.Sprintf("%s.%s", c.GlobalNatsStream, f.UniqueName)),
-			"LOCAL_NATS":    new(fmt.Sprintf("nats://%s:4222", nats.Name)),
-			"LOCAL_TOPIC":   &localBaseTopic,
-			"SHARDS":        new(strconv.Itoa(f.MaxShards)),
-		},
-		Image: c.RouterImage,
+		Environment:   routerEnv,
+		Image:         c.RouterImage,
 		Networks: map[string]*types.ServiceNetworkConfig{
 			"global-net": {},
 			"local-net":  {},
