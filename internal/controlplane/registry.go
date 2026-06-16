@@ -35,13 +35,6 @@ type FunctionEntry struct {
 	state    FunctionState
 }
 
-func newFunctionEntry(f *docker.Function) *FunctionEntry {
-	return &FunctionEntry{
-		function: f,
-		state:    idle,
-	}
-}
-
 func NewRegistry(c *composer.Composer) *Registry {
 	return &Registry{
 		functions: make(map[string]*FunctionEntry),
@@ -53,6 +46,10 @@ func NewRegistry(c *composer.Composer) *Registry {
 func (r *Registry) Add(uniqueName string, f *docker.Function) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	if err := r.composer.Add(f); err != nil {
+		return err
+	}
 
 	if _, ok := r.functions[uniqueName]; ok {
 		return ErrAlreadyExists
@@ -98,12 +95,12 @@ func (r *Registry) Invoke(uniqueName string) error {
 
 	r.mu.Unlock()
 
-	if err := r.composer.Start(e.function); err != nil {
+	if err := r.composer.Up(e.function.UniqueName); err != nil {
 		r.mu.Lock()
 		defer r.mu.Unlock()
 
 		e.state = failed
-		return ErrFunctionDeploymentFailed
+		return errors.Join(err, ErrFunctionDeploymentFailed)
 	}
 
 	r.mu.Lock()
@@ -117,4 +114,11 @@ func (r *Registry) Stop(uniqueName string) error {
 	// TODO: implement this which should stop a Function that is running
 	// stateRunning -> stateStopped
 	panic("implement me...")
+}
+
+func newFunctionEntry(f *docker.Function) *FunctionEntry {
+	return &FunctionEntry{
+		function: f,
+		state:    idle,
+	}
 }
