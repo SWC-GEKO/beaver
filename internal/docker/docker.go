@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 
 	"github.com/SWC-GEKO/beaver/internal/utils"
+	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/go-sdk/client"
 	"github.com/docker/go-sdk/image"
 	uuid2 "github.com/google/uuid"
@@ -87,4 +89,37 @@ func (d *Docker) BuildImage(ctx context.Context, name, version, dir string) (str
 	}
 
 	return tag, nil
+}
+
+func RunProject(p *types.Project) error {
+	f, err := os.Create("compose.yaml")
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err = f.Close()
+		log.Println(err)
+
+		err = os.Remove(f.Name())
+		log.Println(err)
+	}()
+
+	yaml, err := p.MarshalYAML()
+	if err != nil {
+		return err
+	}
+
+	_, err = f.Write(yaml)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command("docker", "compose", "-f", f.Name(), "up", "-d")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("docker compose up: %w", err)
+	}
+
+	return nil
 }
