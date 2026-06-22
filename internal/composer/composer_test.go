@@ -3,6 +3,7 @@ package composer
 import (
 	"log"
 	"testing"
+	"time"
 
 	"github.com/SWC-GEKO/beaver/internal/docker"
 	"github.com/google/uuid"
@@ -38,11 +39,15 @@ func TestAddAndUp(t *testing.T) {
 		MaxShards:   256,
 	}
 
+	start := time.Now()
 	if err = c.Add(f); err != nil {
 		t.Error(err)
 	}
+	log.Println("Add: ", time.Since(start))
 
+	start = time.Now()
 	if err = c.Up(functionName); err != nil {
 		t.Error("up function failed with: ", err)
 	}
+	log.Println(time.Since(start))
 }

@@ -2,7 +2,6 @@ package composer
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -156,10 +155,6 @@ func (c *Composer) Add(f *docker.Function) error {
 		Condition: "service_started",
 	}
 
-	log.Printf("Routers Dependencies: %v", routersDependencies)
-
-	log.Println(services[localNatsName].Name)
-
 	routerEnv := types.NewMappingWithEquals(
 		[]string{
 			fmt.Sprintf("NAME=%s-router", f.UniqueName),
@@ -199,8 +194,6 @@ func (c *Composer) Add(f *docker.Function) error {
 		},
 	}
 
-	log.Printf("Project: %v", project)
-
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -229,12 +222,6 @@ func (c *Composer) Up(uniqueName string) error {
 		return fmt.Errorf("function with name: %s not found", uniqueName)
 	}
 	c.mu.Unlock()
-
-	yaml, err := p.MarshalYAML()
-	if err != nil {
-		return err
-	}
-	log.Printf("%s", yaml)
 
 	return docker.RunProject(&p)
 }
@@ -278,16 +265,4 @@ func calcTopics(shards, currReplicaCount, totalReplicas int, baseTopic string) [
 	}
 
 	return topics
-}
-
-func deepCopyProject(p types.Project) (*types.Project, error) {
-	data, err := json.Marshal(p)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal project: %w", err)
-	}
-	var copy types.Project
-	if err := json.Unmarshal(data, &copy); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal project: %w", err)
-	}
-	return &copy, nil
 }
