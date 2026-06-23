@@ -91,7 +91,7 @@ func (c *Composer) Add(f *docker.Function) error {
 	services := make(map[string]types.ServiceConfig)
 
 	localNatsName := fmt.Sprintf("%s-local-nats", f.UniqueName)
-	services[localNatsName] = types.ServiceConfig{
+	services["local-nats"] = types.ServiceConfig{
 		Name:          localNatsName,
 		ContainerName: localNatsName,
 		Environment:   nil, // TODO: check if needed
@@ -113,7 +113,7 @@ func (c *Composer) Add(f *docker.Function) error {
 
 	processors := make([]types.ServiceConfig, f.Replication)
 	for i := 0; i < f.Replication; i++ {
-		name := fmt.Sprintf("%s-processor-%d", f.UniqueName, i)
+		name := fmt.Sprintf("processor-%d", i)
 
 		subTopics := calcTopics(f.MaxShards, i, f.Replication, localBaseTopic)
 
@@ -168,7 +168,7 @@ func (c *Composer) Add(f *docker.Function) error {
 	)
 
 	routerName := fmt.Sprintf("%s-router", f.UniqueName)
-	services[routerName] = types.ServiceConfig{
+	services["router"] = types.ServiceConfig{
 		Name:          routerName,
 		ContainerName: routerName,
 		DependsOn:     routersDependencies,
@@ -212,18 +212,28 @@ func (c *Composer) Del(uniqueName string) {
 	delete(c.Projects, uniqueName)
 }
 
-func (c *Composer) Up(uniqueName string) error {
+func (c *Composer) Up(ctx context.Context, uniqueName string, seq uint64) error {
 	var p types.Project
 	var ok bool
 
 	c.mu.Lock()
+
+	// TODO: implement check if the function is already running or not!
+
 	if p, ok = c.Projects[uniqueName]; !ok {
-		// TODO: Add Fallback if ControlPlane crashed -> Maybe External DB?
 		return fmt.Errorf("function with name: %s not found", uniqueName)
 	}
 	c.mu.Unlock()
 
-	return docker.RunProject(&p)
+	r := p.Services["router"]
+	r.Environment = r.Environment.OverrideBy(
+		types.NewMappingWithEquals(
+			[]string{fmt.Sprintf("SEQ=%d", seq)},
+		),
+	)
+	p.Services["router"] = r
+
+	return docker.RunProject(ctx, &p)
 }
 
 func (c *Composer) Down(uniqueName string) error {

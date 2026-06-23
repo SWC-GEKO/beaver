@@ -91,7 +91,7 @@ func (d *Docker) BuildImage(ctx context.Context, name, version, dir string) (str
 	return tag, nil
 }
 
-func RunProject(p *types.Project) error {
+func RunProject(ctx context.Context, p *types.Project) error {
 	f, err := os.Create("compose.yaml")
 	if err != nil {
 		return err
