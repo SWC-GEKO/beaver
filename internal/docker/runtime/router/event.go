@@ -42,5 +42,5 @@ func ParseMsgFromEvent(topic string, e *api.Event) *nats.Msg {
 }
 
 func GetShard(key string, vshards int) int {
-	return int(xxhash.Sum64String(key)) % vshards
+	return int(xxhash.Sum64String(key) % uint64(vshards))
 }

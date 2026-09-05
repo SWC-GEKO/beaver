@@ -79,6 +79,7 @@ func (r *Router) RouteEvents(ctx context.Context) error {
 		}
 
 		s := GetShard(k, len(r.LocalTopics))
+		log.Printf("calculated shard: %d (in total: %d)", s, len(r.LocalTopics))
 
 		pubMsg := nats.Msg{
 			Subject: r.LocalTopics[s],
