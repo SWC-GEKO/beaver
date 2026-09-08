@@ -16,10 +16,10 @@ type Registry struct {
 }
 
 type FunctionRecord struct {
-	UniqueName     string `yaml:"uniqueName"`
-	ProcessorImage string `yaml:"processorImage"`
-	Replication    int    `yaml:"replication"`
-	VirtualShards  int    `yaml:"virtualShards"`
+	UniqueName    string `yaml:"uniqueName"`
+	ImageTag      string `yaml:"processorImage"`
+	Replication   int    `yaml:"replication"`
+	VirtualShards int    `yaml:"virtualShards"`
 }
 
 func NewRegistry(dir string) (*Registry, error) {
@@ -107,4 +107,8 @@ func (r *Registry) List() ([]FunctionRecord, error) {
 	}
 
 	return records, nil
+}
+
+func (r *Registry) Clear() error {
+	return os.RemoveAll(r.dir)
 }
