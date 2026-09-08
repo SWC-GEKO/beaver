@@ -1,13 +1,11 @@
-package composer
+package controlplane
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/SWC-GEKO/beaver/internal/docker"
 	"github.com/compose-spec/compose-go/v2/types"
@@ -17,33 +15,39 @@ import (
 	"github.com/docker/compose/v2/pkg/compose"
 )
 
-type Composer struct {
-	Projects map[string]types.Project
-	Config
-	Service api.Compose
+type Function struct {
+	UniqueName string
+	Status     Status
 
-	mu sync.Mutex
+	record         *FunctionRecord
+	composeService api.Compose
+	project        types.Project
 }
 
-type Config struct {
-	GlobalNet             string
-	NatsImage             string
-	RouterImage           string
-	GlobalNatsServiceName string
-	GlobalNatsStream      string
-}
+type Status int
 
-func DefaultConfig() Config {
-	return Config{
-		GlobalNet:             "global-net",
-		NatsImage:             "nats:latest",
-		RouterImage:           "stateless-router:latest",
-		GlobalNatsServiceName: "nats-global",
-		GlobalNatsStream:      "FUNCTIONS",
+const (
+	Idle Status = iota
+	Active
+)
+
+func NewFunction(f *FunctionRecord) (*Function, error) {
+	composeService, err := createComposeService()
+	if err != nil {
+		return nil, err
 	}
+	project := createFunctionProject(f)
+
+	return &Function{
+		UniqueName:     f.UniqueName,
+		Status:         Idle,
+		record:         f,
+		composeService: composeService,
+		project:        project,
+	}, nil
 }
 
-func NewComposer(config Config) (*Composer, error) {
+func createComposeService() (api.Compose, error) {
 	dockerCli, err := command.NewDockerCli()
 	if err != nil {
 		return nil, err
@@ -58,18 +62,10 @@ func NewComposer(config Config) (*Composer, error) {
 		return nil, err
 	}
 
-	service := compose.NewComposeService(dockerCli)
-
-	return &Composer{
-		Projects: make(map[string]types.Project),
-		Config:   config,
-		Service:  service,
-		mu:       sync.Mutex{},
-	}, nil
+	return compose.NewComposeService(dockerCli), nil
 }
 
-func (c *Composer) Add(f *docker.Function) error {
-	// TODO: implement functionality that users can have their own env-vars
+func createFunctionProject(f *FunctionRecord) types.Project {
 	localBaseTopic := "function"
 
 	localNetName := fmt.Sprintf("%s-local-net", f.UniqueName)
@@ -79,7 +75,7 @@ func (c *Composer) Add(f *docker.Function) error {
 	}
 
 	globalNet := types.NetworkConfig{
-		Name:     c.GlobalNet,
+		Name:     f.GlobalNet,
 		External: true,
 	}
 
@@ -91,11 +87,11 @@ func (c *Composer) Add(f *docker.Function) error {
 	services := make(map[string]types.ServiceConfig)
 
 	localNatsName := fmt.Sprintf("%s-local-nats", f.UniqueName)
-	services["local-nats"] = types.ServiceConfig{
+	services[localNatsName] = types.ServiceConfig{
 		Name:          localNatsName,
 		ContainerName: localNatsName,
-		Environment:   nil, // TODO: check if needed
-		Image:         c.NatsImage,
+		Environment:   nil,
+		Image:         f.NatsImage,
 		Command:       types.ShellCommand{"-js"},
 		Networks: map[string]*types.ServiceNetworkConfig{
 			localNetName: {},
@@ -113,9 +109,9 @@ func (c *Composer) Add(f *docker.Function) error {
 
 	processors := make([]types.ServiceConfig, f.Replication)
 	for i := 0; i < f.Replication; i++ {
-		name := fmt.Sprintf("processor-%d", i)
+		name := fmt.Sprintf("%s-processor-%d", f.UniqueName, i)
 
-		subTopics := calcTopics(f.MaxShards, i, f.Replication, localBaseTopic)
+		subTopics := calcTopics(f.VirtualShards, i, f.Replication, localBaseTopic)
 
 		processorEnv := types.NewMappingWithEquals([]string{
 			fmt.Sprintf("NAME=%s", name),
@@ -158,12 +154,12 @@ func (c *Composer) Add(f *docker.Function) error {
 	routerEnv := types.NewMappingWithEquals(
 		[]string{
 			fmt.Sprintf("NAME=%s-router", f.UniqueName),
-			fmt.Sprintf("GLOBAL_NATS=nats://%s:4222", c.GlobalNatsServiceName),
-			fmt.Sprintf("GLOBAL_STREAM=%s", c.GlobalNatsStream),
-			fmt.Sprintf("GLOBAL_TOPIC=%s.%s", c.GlobalNatsStream, f.UniqueName),
+			fmt.Sprintf("GLOBAL_NATS=nats://%s:4222", f.GlobalNatsServiceName),
+			fmt.Sprintf("GLOBAL_STREAM=%s", f.GlobalNatsStream),
+			fmt.Sprintf("GLOBAL_TOPIC=%s.%s", f.GlobalNatsStream, f.UniqueName),
 			fmt.Sprintf("LOCAL_NATS=nats://%s:4222", services[localNatsName].Name),
 			fmt.Sprintf("LOCAL_TOPIC=%s", localBaseTopic),
-			fmt.Sprintf("SHARDS=%s", strconv.Itoa(f.MaxShards)),
+			fmt.Sprintf("SHARDS=%s", strconv.Itoa(f.VirtualShards)),
 		},
 	)
 
@@ -174,7 +170,7 @@ func (c *Composer) Add(f *docker.Function) error {
 		DependsOn:     routersDependencies,
 		Environment:   routerEnv,
 		PullPolicy:    types.PullPolicyMissing,
-		Image:         c.RouterImage,
+		Image:         f.RouterImage,
 		Networks: map[string]*types.ServiceNetworkConfig{
 			"global-net": {},
 			localNetName: {},
@@ -194,61 +190,25 @@ func (c *Composer) Add(f *docker.Function) error {
 		},
 	}
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if _, ok := c.Projects[f.UniqueName]; ok {
-		return errors.New("function with uniqueName already exists in map")
-	}
-	c.Projects[f.UniqueName] = project
-	return nil
+	return project
 }
 
-func (c *Composer) Del(uniqueName string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	// TODO: should you do something?
-	delete(c.Projects, uniqueName)
-}
-
-func (c *Composer) Up(ctx context.Context, uniqueName string, seq uint64) error {
-	var p types.Project
-	var ok bool
-
-	c.mu.Lock()
-
-	// TODO: implement check if the function is already running or not!
-
-	if p, ok = c.Projects[uniqueName]; !ok {
-		return fmt.Errorf("function with name: %s not found", uniqueName)
-	}
-	c.mu.Unlock()
-
-	r := p.Services["router"]
+func (f *Function) Start(ctx context.Context, seq uint64) error {
+	r := f.project.Services["router"]
 	r.Environment = r.Environment.OverrideBy(
 		types.NewMappingWithEquals(
 			[]string{fmt.Sprintf("SEQ=%d", seq)},
 		),
 	)
-	p.Services["router"] = r
+	f.project.Services["router"] = r
 
-	return docker.RunProject(ctx, &p)
+	return docker.RunProject(ctx, &f.project)
 }
 
-func (c *Composer) Down(uniqueName string) error {
-	var p types.Project
-	var ok bool
-
-	c.mu.Lock()
-	if p, ok = c.Projects[uniqueName]; !ok {
-		return fmt.Errorf("function with name: %s not found", uniqueName)
-	}
-	c.mu.Unlock()
-
-	return c.Service.Down(context.Background(), p.Name, api.DownOptions{
+func (f *Function) Stop(ctx context.Context) error {
+	return f.composeService.Down(ctx, f.project.Name, api.DownOptions{
 		RemoveOrphans: true,
-		Project:       &p,
+		Project:       &f.project,
 		Volumes:       false,
 	})
 }
