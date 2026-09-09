@@ -19,7 +19,7 @@ type Function struct {
 	UniqueName string
 	Status     Status
 
-	record         *FunctionRecord
+	record         FunctionRecord
 	composeService api.Compose
 	project        types.Project
 }
@@ -31,7 +31,7 @@ const (
 	Active
 )
 
-func NewFunction(f *FunctionRecord) (*Function, error) {
+func NewFunction(f FunctionRecord) (*Function, error) {
 	composeService, err := createComposeService()
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func createComposeService() (api.Compose, error) {
 	return compose.NewComposeService(dockerCli), nil
 }
 
-func createFunctionProject(f *FunctionRecord) types.Project {
+func createFunctionProject(f FunctionRecord) types.Project {
 	localBaseTopic := "function"
 
 	localNetName := fmt.Sprintf("%s-local-net", f.UniqueName)
