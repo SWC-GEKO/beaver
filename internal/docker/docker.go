@@ -17,6 +17,7 @@ import (
 )
 
 const TmpDir = "./tmp"
+const DefaultProcessorPath = "internal/docker/runtime/processor"
 
 type Docker struct {
 	client client.SDKClient
@@ -27,52 +28,39 @@ func NewDocker() Docker {
 	return Docker{}
 }
 
-func (d *Docker) Create(ctx context.Context, name string, filedir string) (*Function, error) {
+func (d *Docker) Create(ctx context.Context, name string, filedir string) (string, string, error) {
 	uuid, err := uuid2.NewRandom()
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
 
 	uniqueName := fmt.Sprintf("%s-%s", name, uuid.String())
 
 	filePath := path.Join(TmpDir, uniqueName)
 	if err = os.MkdirAll(filePath, 0777); err != nil {
-		return nil, fmt.Errorf("creating unique-function directory failed with error: %v", err)
+		return "", "", fmt.Errorf("creating unique-function directory failed with error: %v", err)
 	}
 
-	processorPath := "internal/docker/runtime/processor"
-
-	if err = utils.CopyAll(processorPath, filePath); err != nil {
-		return nil, fmt.Errorf("copying the handler-code into the unique directory failed with error: %v", err)
+	if err = utils.CopyAll(DefaultProcessorPath, filePath); err != nil {
+		return "", "", fmt.Errorf("copying the handler-code into the unique directory failed with error: %v", err)
 	}
 
 	if err = utils.CopyAll(filedir, filePath); err != nil {
-		return nil, fmt.Errorf("copying function-code into the directory failed with err: %v", err)
+		return "", "", fmt.Errorf("copying function-code into the directory failed with err: %v", err)
 	}
 
 	// Building the Processor
 	// TODO: version should be passed by the user
-	tag, err := d.BuildImage(ctx, uniqueName, "", filePath)
+	imageTag, err := d.BuildImage(ctx, uniqueName, filePath)
 	if err != nil {
-		return nil, fmt.Errorf("building image failed with err: %v", err)
+		return "", "", fmt.Errorf("building image failed with err: %v", err)
 	}
 
-	log.Println("Created processor image with tag: ", tag)
-
-	f := Function{
-		UniqueName: uniqueName,
-		ImageTag:   tag,
-	}
-
-	return &f, nil
+	return uniqueName, imageTag, nil
 }
 
-func (d *Docker) BuildImage(ctx context.Context, name, version, dir string) (string, error) {
-	if version == "" {
-		version = "latest"
-	}
-
-	log.Println(dir)
+func (d *Docker) BuildImage(ctx context.Context, name, dir string) (string, error) {
+	version := "latest"
 
 	r, err := image.ArchiveBuildContext(dir, "Dockerfile")
 	if err != nil {
