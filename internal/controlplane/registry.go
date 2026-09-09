@@ -16,10 +16,31 @@ type Registry struct {
 }
 
 type FunctionRecord struct {
-	UniqueName    string `yaml:"uniqueName"`
-	ImageTag      string `yaml:"processorImage"`
-	Replication   int    `yaml:"replication"`
-	VirtualShards int    `yaml:"virtualShards"`
+	UniqueName            string `yaml:"uniqueName"`
+	ImageTag              string `yaml:"processorImage"`
+	Replication           int    `yaml:"replication"`
+	VirtualShards         int    `yaml:"virtualShards"`
+	GlobalNet             string `yaml:"globalNet"`
+	NatsImage             string `yaml:"natsImage"`
+	RouterImage           string `yaml:"routerImage"`
+	GlobalNatsServiceName string `yaml:"globalNatsServiceName"`
+	GlobalNatsStream      string `yaml:"globalNatsStream"`
+	GlobalNatsSubject     string `yaml:"globalNatsSubject"`
+}
+
+func DefaultRecord(uniqueName, imageTag string, replication, vShards int) FunctionRecord {
+	return FunctionRecord{
+		UniqueName:            uniqueName,
+		ImageTag:              imageTag,
+		Replication:           replication,
+		VirtualShards:         vShards,
+		GlobalNet:             "global-net",
+		NatsImage:             "nats:latest",
+		RouterImage:           "stateless-router:latest",
+		GlobalNatsServiceName: "nats-global",
+		GlobalNatsStream:      "FUNCTIONS",
+		GlobalNatsSubject:     "FUNCTIONS." + uniqueName,
+	}
 }
 
 func NewRegistry(dir string) (*Registry, error) {

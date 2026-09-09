@@ -18,10 +18,10 @@ func TestRegistry_Save(t *testing.T) {
 	r := ensureRegistry()
 
 	record := FunctionRecord{
-		UniqueName:     "test_save_2",
-		ProcessorImage: "stateless-processor:latest",
-		Replication:    8,
-		VirtualShards:  256,
+		UniqueName:    "test_save_2",
+		ImageTag:      "stateless-processor:latest",
+		Replication:   8,
+		VirtualShards: 256,
 	}
 
 	if err := r.Save(record); err != nil {
