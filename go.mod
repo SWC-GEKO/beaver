@@ -8,6 +8,7 @@ require (
 	github.com/docker/compose/v2 v2.40.3
 	github.com/docker/go-sdk/client v0.1.0-alpha013
 	github.com/docker/go-sdk/image v0.1.0-alpha015
+	github.com/goccy/go-yaml v1.19.2
 	github.com/google/uuid v1.6.0
 	github.com/moby/moby/client v0.1.0
 	github.com/nats-io/nats.go v1.52.0

@@ -6,7 +6,7 @@ import (
 )
 
 func ensureRegistry() *Registry {
-	r, err := NewRegistry("test-registry")
+	r, err := NewRegistry("evaluation-registry")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -33,7 +33,7 @@ func TestRegistry_Delete(t *testing.T) {
 	r := ensureRegistry()
 
 	if err := r.Delete("test_save_1"); err != nil {
-		t.Errorf("deleting test-file failed with err: %v", err)
+		t.Errorf("deleting evaluation-file failed with err: %v", err)
 	}
 }
 

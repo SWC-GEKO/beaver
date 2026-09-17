@@ -1,13 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 
 	"github.com/SWC-GEKO/beaver/internal/controlplane"
 	"github.com/SWC-GEKO/beaver/spec/contracts"
-	"github.com/google/uuid"
 )
 
 type server struct {
@@ -15,13 +15,30 @@ type server struct {
 }
 
 const addr = ":8080"
+const dir = "internal/controlplane/evaluationtest-registry"
+const stream = "FUNCTIONS"
+const natsUrl = ":4222"
 
 func main() {
 	log.SetPrefix("controlplane: ")
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
 
+	_, err := controlplane.NewRegistry(dir)
+	if err != nil {
+		panic(err)
+	}
+
+	cp, err := controlplane.New(stream, natsUrl, dir)
+	if err != nil {
+		panic(err)
+	}
+
 	s := server{
-		cp: controlplane.New(uuid.New().String()),
+		cp: cp,
+	}
+
+	if err := s.cp.Start(context.Background()); err != nil {
+		panic(err)
 	}
 
 	mux := http.NewServeMux()
@@ -30,7 +47,7 @@ func main() {
 	mux.HandleFunc("/upload", s.upload)
 
 	if err := http.ListenAndServe(addr, mux); err != nil {
-		log.Fatalln(err)
+		panic(err)
 	}
 }
 
@@ -47,21 +64,15 @@ func (s *server) upload(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
-	switch data.Type {
-	case contracts.STATELESS:
-		if err := s.cp.UploadStateless(data.Name, data.Zip); err != nil {
-			log.Println("uploading stateless fn failed with err: ", err)
-			rw.WriteHeader(http.StatusBadRequest)
-			return
-		}
-	case contracts.STATEFUL:
-		rw.WriteHeader(http.StatusNotImplemented)
-		return
-	default:
+	var uniqueName string
+	var err error
+	if uniqueName, err = s.cp.Upload(data.Name, data.Zip, data.Replication, data.VirtualShards); err != nil {
+		log.Println("uploading function failed with err: ", err)
 		rw.WriteHeader(http.StatusBadRequest)
+		rw.Write([]byte(err.Error()))
 		return
 	}
-
 	rw.WriteHeader(http.StatusOK)
+	// TODO: add a Upload-Response
+	rw.Write([]byte(uniqueName))
 }

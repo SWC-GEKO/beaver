@@ -8,12 +8,12 @@ import (
 )
 
 func TestControlPlane_Upload(t *testing.T) {
-	cp, err := New("FUNCTIONS", ":4222", "test-registry")
+	cp, err := New("FUNCTIONS", ":4222", "evaluation-registry")
 	if err != nil {
 		t.Errorf("creating control-plane failed with err: %v", err)
 	}
 
-	fnZip, err := utils.Zip("/Users/stahlco/GolandProjects/beaver/test/echo")
+	fnZip, err := utils.Zip("/Users/stahlco/GolandProjects/beaver/evaluation/echo")
 	if err != nil {
 		t.Errorf("creating zip from path failed with err: %v", err)
 	}

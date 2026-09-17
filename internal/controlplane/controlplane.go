@@ -47,7 +47,6 @@ func New(stream, natsUrl, registryDir string) (*ControlPlane, error) {
 }
 
 func (cp *ControlPlane) Start(ctx context.Context) error {
-	log.Println("starting the control-plane")
 	nc, err := nats.Connect(cp.natsUrl)
 	if err != nil {
 		return fmt.Errorf("connecting to global nats failed with err: %v", err)

@@ -49,9 +49,10 @@ func (c *connection) upload(rt *Runtime) error {
 	}
 
 	data := contracts.UploadRequest{
-		Name: rt.function.name,
-		Type: rt.function.fnType,
-		Zip:  zip,
+		Name:          rt.function.name,
+		Zip:           zip,
+		Replication:   rt.function.replication,
+		VirtualShards: rt.function.virtualshards,
 	}
 
 	jsonData, err := json.Marshal(data)

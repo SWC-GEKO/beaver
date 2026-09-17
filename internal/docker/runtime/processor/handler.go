@@ -78,14 +78,14 @@ func main() {
 	var wg sync.WaitGroup
 
 	for _, s := range subs {
-		f := h.Registry.Get().Stateless
+		f := h.Registry.Get()
 
 		if f == nil {
 			log.Println("function is nil, aborting")
 		}
 
 		wg.Add(1)
-		go func(sub *nats.Subscription, fn api.StatelessFunction) {
+		go func(sub *nats.Subscription, fn api.Function) {
 			defer wg.Done()
 
 			h.EventLoop(ctx, sub, fn)
@@ -122,7 +122,7 @@ func New(cfg Config) (*Handler, error) {
 }
 
 // EventLoop is the core loop of the function, as it handles the nats-Subscription and the routing layer
-func (h *Handler) EventLoop(ctx context.Context, sub *nats.Subscription, fn api.StatelessFunction) {
+func (h *Handler) EventLoop(ctx context.Context, sub *nats.Subscription, fn api.Function) {
 	defer sub.Unsubscribe()
 
 	log.Println("starting event-loop for topic: ", sub.Subject)
