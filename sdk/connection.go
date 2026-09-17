@@ -52,7 +52,7 @@ func (c *connection) upload(rt *Runtime) error {
 		Name:          rt.function.name,
 		Zip:           zip,
 		Replication:   rt.function.replication,
-		VirtualShards: rt.function.virtualshards,
+		VirtualShards: rt.function.virtualShards,
 	}
 
 	jsonData, err := json.Marshal(data)

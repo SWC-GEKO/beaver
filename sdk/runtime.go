@@ -15,7 +15,7 @@ type function struct {
 	path          string
 	zip           string
 	replication   int
-	virtualshards int
+	virtualShards int
 }
 
 func NewRuntime(host, port string) *Runtime {
@@ -38,14 +38,16 @@ func (rt *Runtime) Start() error {
 	return nil
 }
 
-func (rt *Runtime) Add(name string, path string) {
+func (rt *Runtime) Add(name string, path string, replication, vShards int) {
 	if rt.function != nil {
 		log.Fatalf("runtime has already a Function registered")
 	}
 
 	f := function{
-		name: name,
-		path: path,
+		name:          name,
+		path:          path,
+		replication:   replication,
+		virtualShards: vShards,
 	}
 
 	rt.function = &f
