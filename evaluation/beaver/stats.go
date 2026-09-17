@@ -18,24 +18,24 @@ func init() {
 
 // Event is the unit of input for all variants
 type Event struct {
-	MessageID int64     `json:"messageId"`
-	T0        time.Time `json:"t0"`
-	TCreated  time.Time `json:"tCreated"`
-	Value     float64   `json:"value"`
+	MessageID int64   `json:"messageId"`
+	T0        int64   `json:"t0"`
+	TCreated  int64   `json:"tCreated"`
+	Value     float64 `json:"value"`
 }
 
 // Result is the unit of output for all variants
 type Result struct {
-	Key           string    `json:"key"`
-	MessageId     int64     `json:"messageId"`
-	T0            time.Time `json:"t0"`
-	TCreated      time.Time `json:"tCreated"`
-	TReceived     time.Time `json:"tReceived"`
-	TProcessed    time.Time `json:"tProcessed"`
-	Value         float64   `json:"value"`
-	Count         int64     `json:"count"`
-	RollingAvg    float64   `json:"rollingAvg"`
-	RollingStdDev float64   `json:"rollingStdDev"`
+	Key           string  `json:"key"`
+	MessageId     int64   `json:"messageId"`
+	T0            int64   `json:"t0"`
+	TCreated      int64   `json:"tCreated"`
+	TReceived     int64   `json:"tReceived"`
+	TProcessed    int64   `json:"tProcessed"`
+	Value         float64 `json:"value"`
+	Count         int64   `json:"count"`
+	RollingAvg    float64 `json:"rollingAvg"`
+	RollingStdDev float64 `json:"rollingStdDev"`
 }
 
 type State struct {
@@ -54,7 +54,7 @@ func (f Function) Exec(ctx context.Context, event *api.Event) (*api.Event, error
 		log.Fatalln("not able to process, key not given!")
 	}
 
-	tReceived := time.Now()
+	tReceived := time.Now().UnixNano()
 
 	e := NewEventFromJsonBytes(event.Body)
 
@@ -62,13 +62,13 @@ func (f Function) Exec(ctx context.Context, event *api.Event) (*api.Event, error
 	f.KeyState[key] = newState
 
 	res.TReceived = tReceived
-	res.TProcessed = time.Now()
+	res.TProcessed = time.Now().UnixNano()
 
 	// log structure:
 	// @@@ messageId key t0 tCreated tReceived tProcessed count rollingAvg rollingStddev @@@
 	l := fmt.Sprintf("@@@ %d %s %d %d %d %d %d %.2f %.2f @@@",
-		e.MessageID, key, e.T0.UnixNano(), e.TCreated.UnixNano(),
-		res.TReceived.UnixNano(), res.TProcessed.UnixNano(), res.Count, res.RollingAvg, res.RollingStdDev)
+		e.MessageID, key, e.T0, e.TCreated,
+		res.TReceived, res.TProcessed, res.Count, res.RollingAvg, res.RollingStdDev)
 
 	log.Println(l)
 
