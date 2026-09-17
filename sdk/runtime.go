@@ -2,8 +2,6 @@ package sdk
 
 import (
 	"log"
-
-	"github.com/SWC-GEKO/beaver/spec/contracts"
 )
 
 type Runtime struct {
@@ -13,10 +11,11 @@ type Runtime struct {
 }
 
 type function struct {
-	name   string
-	path   string
-	fnType contracts.FunctionType
-	zip    string
+	name          string
+	path          string
+	zip           string
+	replication   int
+	virtualshards int
 }
 
 func NewRuntime(host, port string) *Runtime {
@@ -39,15 +38,14 @@ func (rt *Runtime) Start() error {
 	return nil
 }
 
-func (rt *Runtime) Add(name string, path string, functionType contracts.FunctionType) {
+func (rt *Runtime) Add(name string, path string) {
 	if rt.function != nil {
 		log.Fatalf("runtime has already a Function registered")
 	}
 
 	f := function{
-		name:   name,
-		path:   path,
-		fnType: functionType,
+		name: name,
+		path: path,
 	}
 
 	rt.function = &f

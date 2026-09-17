@@ -4,19 +4,10 @@ import (
 	"errors"
 
 	"github.com/SWC-GEKO/beaver/spec/api"
-	"github.com/SWC-GEKO/beaver/spec/contracts"
 )
 
-type RegisteredFunction struct {
-	Name string
-	Type contracts.FunctionType
-
-	Stateless api.StatelessFunction
-	Stateful  api.StatefulFunction
-}
-
 type Registry struct {
-	function *RegisteredFunction
+	function *api.Function
 }
 
 var defaultRegistry = New()
@@ -33,7 +24,7 @@ func (r *Registry) Reset() {
 	r.function = nil
 }
 
-func (r *Registry) RegisterStateless(name string, s api.StatelessFunction) error {
+func (r *Registry) Register(name string, fn api.Function) error {
 	if name == "" {
 		return errors.New("function must have a name")
 	}
@@ -42,37 +33,10 @@ func (r *Registry) RegisterStateless(name string, s api.StatelessFunction) error
 		return errors.New("function already exists in registry")
 	}
 
-	f := RegisteredFunction{
-		Name:      name,
-		Type:      contracts.STATELESS,
-		Stateless: s,
-	}
-
-	r.function = &f
+	r.function = &fn
 	return nil
 }
 
-func (r *Registry) RegisterStateful(name string, s api.StatefulFunction) error {
-	if name == "" {
-		return errors.New("function must have a name")
-	}
-
-	if r.function != nil {
-		return errors.New("function already exists in registry")
-	}
-
-	f := RegisteredFunction{
-		Name:     name,
-		Type:     contracts.STATEFUL,
-		Stateful: s,
-	}
-
-	r.function = &f
-	return nil
-}
-
-// Get returns a copy of the underlying function. This is required as each nats-topic gets consumed by a single thread!
-
-func (r *Registry) Get() RegisteredFunction {
+func (r *Registry) Get() api.Function {
 	return *r.function
 }
