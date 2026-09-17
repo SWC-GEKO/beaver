@@ -8,7 +8,7 @@ import (
 )
 
 func TestControlPlane_Upload(t *testing.T) {
-	cp, err := New("FUNCTIONS", ":4222", "evaluation-registry")
+	cp, err := New("FUNCTIONS", ":4222", "test-registry")
 	if err != nil {
 		t.Errorf("creating control-plane failed with err: %v", err)
 	}

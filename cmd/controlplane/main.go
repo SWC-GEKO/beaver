@@ -15,7 +15,7 @@ type server struct {
 }
 
 const addr = ":8080"
-const dir = "internal/controlplane/evaluationtest-registry"
+const dir = "internal/controlplane/test-registry"
 const stream = "FUNCTIONS"
 const natsUrl = ":4222"
 

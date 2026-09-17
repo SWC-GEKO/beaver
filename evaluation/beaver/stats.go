@@ -1,4 +1,4 @@
-package beaver
+package main
 
 import (
 	"context"
