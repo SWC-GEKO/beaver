@@ -61,20 +61,14 @@ func (cp *ControlPlane) Start(ctx context.Context) error {
 		return err
 	}
 
-	// 4. Start Observer -> Maybe do some additional stuff here
-	o, err := NewObserver(ctx, cp.natsUrl, cp.stream)
-	if err != nil {
-		return fmt.Errorf("creating new observer failed with err: %v", err)
-	}
-
 	// 5. Register all Functions in Observer
 	for _, f := range functionRecs {
-		if !o.RegisterFunction(f) {
+		if !cp.observer.RegisterFunction(f) {
 			log.Printf("function with name: %s, not able to be registered", f.UniqueName)
 		}
 	}
 
-	go o.Start()
+	go cp.observer.Start()
 
 	return nil
 }
