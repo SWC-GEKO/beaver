@@ -55,6 +55,7 @@ func NewObserver(ctx context.Context, natsUrl, stream string) (*Observer, error)
 func (o *Observer) RegisterFunction(rec FunctionRecord) bool {
 	fullTopicName := fmt.Sprintf("%s.%s", o.Stream, rec.UniqueName)
 
+	log.Printf("registering function with full-topic-name: %s", fullTopicName)
 	o.mtx.Lock()
 	defer o.mtx.Unlock()
 
@@ -69,6 +70,7 @@ func (o *Observer) RegisterFunction(rec FunctionRecord) bool {
 	}
 	o.Functions[fullTopicName] = f
 
+	log.Printf("registered function: %v successfully", o.Functions[fullTopicName])
 	return true
 }
 
@@ -84,6 +86,7 @@ func (o *Observer) Start() error {
 
 		f, exists := o.Functions[subject]
 		if !exists {
+			log.Printf("function with subject: %s, does not exist (Functions: %v", subject, o.Functions)
 			o.mtx.Unlock()
 			return
 		}
@@ -97,6 +100,7 @@ func (o *Observer) Start() error {
 		o.Functions[subject] = f
 		o.mtx.Unlock()
 
+		log.Println("starting function now")
 		go o.startFunction(subject, f, msg)
 	})
 	return err
