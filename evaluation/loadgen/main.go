@@ -24,10 +24,10 @@ var cfg = &Config{}
 func parseFlags() {
 	duration := flag.Int("duration", 60, "duration of the benchmark in seconds")
 	seed := flag.Int64("seed", 42, "PRNG seed -- reuse to reproduce the same key/value sequence")
-	keySpace := flag.Int("keys", 10, "number of possible keys")
-	rate := flag.Int("rate", 10, "events per second")
+	keySpace := flag.Int("keys", 4, "number of possible keys")
+	rate := flag.Int("rate", 1, "events per second")
 	natsURL := flag.String("nats-url", "nats://localhost:4222", "NATS server URL")
-	subject := flag.String("subject", "events", "NATS subject to publish to")
+	subject := flag.String("subject", "FUNCTIONS.stats-93463e7d-ffb9-4d01-8807-5b4162fb4301", "NATS subject to publish to")
 	flag.Parse()
 
 	cfg.Seed = *seed
@@ -75,7 +75,7 @@ loop:
 			break loop
 		case <-ticker.C:
 			value := float64(rng.Intn(100) + 1) // 1..100
-			key := fmt.Sprintf("key-%d", rng.Intn(cfg.KeySpace))
+			key := fmt.Sprintf("%d", rng.Intn(cfg.KeySpace))
 
 			wg.Add(1)
 			go func(key string, value float64) {

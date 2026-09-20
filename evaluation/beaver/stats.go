@@ -13,11 +13,11 @@ import (
 )
 
 func init() {
-	beaver.RegisterFunction("stats", &Function{KeyState: make(map[string]State)})
+	beaver.RegisterFunction("stats", &Function{KeyState: make(map[string]*State)})
 }
 
-// Event is the unit of input for all variants
-type Event struct {
+// Payload is the unit of input for all variants
+type Payload struct {
 	MessageID int64   `json:"messageId"`
 	T0        int64   `json:"t0"`
 	TCreated  int64   `json:"tCreated"`
@@ -45,27 +45,31 @@ type State struct {
 }
 
 type Function struct {
-	KeyState map[string]State
+	KeyState map[string]*State
 }
 
 func (f Function) Exec(ctx context.Context, event *api.Event) (*api.Event, error) {
 	key, ok := event.Headers["Key"]
 	if !ok {
-		log.Fatalln("not able to process, key not given!")
+		log.Println("key not given, skipping event!")
+		return nil, nil
 	}
 
 	tReceived := time.Now().UnixNano()
 
-	e := NewEventFromJsonBytes(event.Body)
+	e, err := NewEventFromJsonBytes(event.Body)
+	if err != nil {
+		log.Println("Parsing new Event from JSON failed with err: ", err)
+	}
 
-	newState, res := Process(key, e, f.KeyState[key])
-	f.KeyState[key] = newState
+	res := f.Process(key, e)
 
 	res.TReceived = tReceived
 	res.TProcessed = time.Now().UnixNano()
 
 	// log structure:
 	// @@@ messageId key t0 tCreated tReceived tProcessed count rollingAvg rollingStddev @@@
+	//@@@ 0 0 0 0 1789716849652907802 1789716849653115885 13 0.00 0.00 @@@
 	l := fmt.Sprintf("@@@ %d %s %d %d %d %d %d %.2f %.2f @@@",
 		e.MessageID, key, e.T0, e.TCreated,
 		res.TReceived, res.TProcessed, res.Count, res.RollingAvg, res.RollingStdDev)
@@ -77,12 +81,19 @@ func (f Function) Exec(ctx context.Context, event *api.Event) (*api.Event, error
 
 // Process folds one Event into given per-key State using
 // Welford's online algorithm and returns the updated State.
-func Process(k string, e *Event, s State) (State, *Result) {
+func (f *Function) Process(k string, e *Payload) *Result {
+	s, ok := f.KeyState[k]
+	if !ok {
+		s = &State{}
+	}
+
 	s.Count++
 	delta := e.Value - s.Mean
 	s.Mean += delta / float64(s.Count)
 	delta2 := e.Value - s.Mean
 	s.Mean2 += delta * delta2
+
+	f.KeyState[k] = s
 
 	var stddev float64
 	if s.Count > 1 {
@@ -91,7 +102,7 @@ func Process(k string, e *Event, s State) (State, *Result) {
 		}
 	}
 
-	result := &Result{
+	return &Result{
 		Key:           k,
 		T0:            e.T0,
 		TCreated:      e.TCreated,
@@ -100,12 +111,12 @@ func Process(k string, e *Event, s State) (State, *Result) {
 		RollingAvg:    s.Mean,
 		RollingStdDev: stddev,
 	}
-
-	return s, result
 }
 
-func NewEventFromJsonBytes(b []byte) *Event {
-	var e Event
-	_ = json.Unmarshal(b, &e)
-	return &e
+func NewEventFromJsonBytes(b []byte) (*Payload, error) {
+	var e Payload
+	if err := json.Unmarshal(b, &e); err != nil {
+		return nil, err
+	}
+	return &e, nil
 }

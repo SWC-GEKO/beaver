@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 
-	"github.com/SWC-GEKO/beaver/spec/api"
+	"github.com/nats-io/nats.go"
 )
 
 type Payload struct {
@@ -13,7 +13,7 @@ type Payload struct {
 	Value     float64 `json:"value"`
 }
 
-func NewEvent(key string, id, t0, tCreated int64, value float64) (*api.Event, error) {
+func NewMsg(key, subject string, id, t0, tCreated int64, value float64) (*nats.Msg, error) {
 	p := Payload{
 		MessageID: id,
 		T0:        t0,
@@ -26,11 +26,9 @@ func NewEvent(key string, id, t0, tCreated int64, value float64) (*api.Event, er
 		return nil, err
 	}
 
-	e := api.Event{
-		Headers: make(map[string]string),
-		Body:    bytes,
-	}
-	e.Headers["Key"] = key
+	msg := nats.NewMsg(subject)
+	msg.Data = bytes
+	msg.Header.Set("Key", key)
 
-	return &e, nil
+	return msg, nil
 }

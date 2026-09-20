@@ -212,8 +212,15 @@ func LoadConfigFromEnv() (*Config, error) {
 }
 
 func parseMsgToEvent(msg *nats.Msg) (*api.Event, error) {
+	headers := make(map[string]string)
+
+	for key, values := range msg.Header {
+		headers[key] = strings.Join(values, ",")
+	}
+
 	return &api.Event{
-		Body: msg.Data,
+		Headers: headers,
+		Body:    msg.Data,
 	}, nil
 }
 

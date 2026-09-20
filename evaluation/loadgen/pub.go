@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -30,18 +28,13 @@ func NewPublisher(natsUrl, subject string, t0 int64) (*Publisher, error) {
 }
 
 func (p *Publisher) Publish(key string, value float64) error {
-	e, err := NewEvent(key, p.counter, p.t0, time.Now().UnixNano(), value)
+	msg, err := NewMsg(key, p.subject, p.counter, p.t0, time.Now().UnixNano(), value)
 	if err != nil {
 		return err
 	}
 	p.counter++
 
-	data, err := json.Marshal(e)
-	if err != nil {
-		return fmt.Errorf("not able to marshall event, err: %v", err)
-	}
-
-	return p.nc.Publish(p.subject, data)
+	return p.nc.PublishMsg(msg)
 }
 
 func (p *Publisher) Close() error {
