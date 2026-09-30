@@ -40,7 +40,7 @@
    > 
    > The function code must be written in `package main`, and an `init()` function is required. The platform uses `init()` to automatically register and execute the function at runtime.
    
-4. **Create a `main.go`, in a different directory, to upload the function - make sure that the ControlPlane is up and running.**
+4. **Create a `fn.go`, in a different directory, to upload the function - make sure that the ControlPlane is up and running.**
    ```Go
    package main
    
