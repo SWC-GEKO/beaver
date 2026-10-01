@@ -39,18 +39,18 @@ func stats(rw http.ResponseWriter, r *http.Request) {
 	bytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
-		log.Fatalf("reading from request body failed with: %v", err)
+		log.Printf("reading from request body failed with: %v", err)
 	}
 
-	if err := json.Unmarshal(bytes, &p); err != nil {
+	if err = json.Unmarshal(bytes, &p); err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
-		log.Fatalf("unmarshalling request into payload failed with err: %v", err)
+		log.Printf("unmarshalling request into payload failed with err: %v", err)
 	}
 
 	vals, err := client.HGetAll(ctx, key).Result()
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
-		log.Fatalf("fetching values for key: %s, failed with err: %v", key, err)
+		log.Printf("fetching values for key: %s, failed with err: %v", key, err)
 	}
 
 	counter := int64(0)
@@ -61,7 +61,7 @@ func stats(rw http.ResponseWriter, r *http.Request) {
 		counter, err = strconv.ParseInt(c, 10, 64)
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
-			log.Fatalf("failed to parse count %q: %v", c, err)
+			log.Printf("failed to parse count %q: %v", c, err)
 		}
 	}
 
@@ -69,7 +69,7 @@ func stats(rw http.ResponseWriter, r *http.Request) {
 		mean, err = strconv.ParseFloat(m, 64)
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
-			log.Fatalf("failed to parse mean %q: %v", m, err)
+			log.Printf("failed to parse mean %q: %v", m, err)
 		}
 	}
 
@@ -77,7 +77,7 @@ func stats(rw http.ResponseWriter, r *http.Request) {
 		mean2, err = strconv.ParseFloat(m2, 64)
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
-			log.Fatalf("failed to parse mean2 %q: %v", m2, err)
+			log.Printf("failed to parse mean2 %q: %v", m2, err)
 		}
 	}
 
@@ -102,7 +102,7 @@ func stats(rw http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
-		log.Fatalf("failed to update state for key %s: %v", key, err)
+		log.Printf("failed to update state for key %s: %v", key, err)
 	}
 
 	tProcessed := time.Now().UnixNano()
