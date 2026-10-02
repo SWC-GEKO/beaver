@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -21,13 +22,18 @@ type Payload struct {
 	Value     float64 `json:"value"`
 }
 
-func init() {
-	functions.HTTP("StatsFunction", stats)
-}
+var client *redis.Client
 
-var client = redis.NewClient(&redis.Options{
-	Addr: "localhost:6379",
-})
+func init() {
+	valkeyAddr := os.Getenv("VALKEY_ADDR")
+	if valkeyAddr == "" {
+		valkeyAddr = "localhost:6379"
+	}
+
+	functions.HTTP("StatsFunction", stats)
+
+	client = redis.NewClient(&redis.Options{Addr: valkeyAddr})
+}
 
 func stats(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
