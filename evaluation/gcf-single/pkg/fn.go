@@ -27,7 +27,7 @@ var client *redis.Client
 func init() {
 	valkeyAddr := os.Getenv("VALKEY_ADDR")
 	if valkeyAddr == "" {
-		valkeyAddr = "localhost:6379"
+		valkeyAddr = ""
 	}
 
 	functions.HTTP("StatsFunction", stats)

@@ -1,4 +1,4 @@
-package lg
+package main
 
 import (
 	"bytes"
@@ -95,6 +95,7 @@ loop:
 				break loop
 			}
 			log.Println("StatusCode: ", resp.StatusCode)
+			return
 
 		case <-ticker.C:
 			value := float64(rng.Intn(100) + 1)

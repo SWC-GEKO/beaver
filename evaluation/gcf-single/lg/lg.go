@@ -35,7 +35,7 @@ func parseFlags() {
 	seed := flag.Int64("seed", 42, "PRNG seed -- reuse to reproduce the same key/value sequence")
 	keySpace := flag.Int("keys", 4, "number of possible keys")
 	rate := flag.Int("rate", 1, "events per second")
-	url := flag.String("url", "http://localhost:8082/StatsFunction", "Server URL")
+	url := flag.String("url", "", "Server URL")
 	flag.Parse()
 
 	cfg.Seed = *seed
