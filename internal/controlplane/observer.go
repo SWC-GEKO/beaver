@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 )
+
+const idleTimeout = 10 * time.Minute
 
 type Observer struct {
 	Stream    string
@@ -81,58 +82,93 @@ func (o *Observer) Start() error {
 		log.Printf("received message in subject: %s", msg.Subject())
 
 		subject := msg.Subject()
+		md, err := msg.Metadata()
+		if err != nil {
+			return
+		}
 
 		o.mtx.Lock()
-
-		f, exists := o.Functions[subject]
-		if !exists {
-			log.Printf("function with subject: %s, does not exist (Functions: %v", subject, o.Functions)
+		f, ok := o.Functions[subject]
+		if !ok {
 			o.mtx.Unlock()
 			return
 		}
+		f.lastEvent = time.Now()
 
-		if f.Status == Active {
+		switch f.Status {
+		case Active:
 			o.mtx.Unlock()
 			return
+		case Stopping:
+			if f.pendingSeq == 0 {
+				f.pendingSeq = md.Sequence.Stream
+			}
+			o.mtx.Unlock()
+			return
+		default:
+			log.Println("unknown function status")
 		}
-
 		f.Status = Active
-		o.Functions[subject] = f
 		o.mtx.Unlock()
 
-		log.Println("starting function now")
-		go o.startFunction(subject, f, msg)
+		go o.startFunction(context.Background(), subject, f, md.Sequence.Stream)
 	})
 	return err
 }
 
-func (o *Observer) startFunction(subj string, f *Function, msg jetstream.Msg) {
-	// Strip FUNCTIONS.<unique-name> -> <unique-name>
-	uniqueName := strings.TrimPrefix(subj, o.Stream+".")
-
-	metadata, err := msg.Metadata()
-	if err != nil {
-		log.Println("failed to fetch metadata: ", err)
-		return
-	}
-
-	log.Println("starting compose file")
+func (o *Observer) startFunction(ctx context.Context, subj string, f *Function, seq uint64) {
 	start := time.Now()
-	err = f.Start(context.Background(), metadata.Sequence.Stream)
-	if err != nil {
-		log.Printf("failed to start function %s: %v", uniqueName, err)
+	if err := f.Start(ctx, seq); err != nil {
+		log.Printf("failed to start function %s: %v", f.UniqueName, err)
 		o.setIdle(subj)
 		return
 	}
-
-	// TODO: implement goroutine that in parallel waits to shutdown the function!
-
 	log.Println("starting took: ", time.Since(start))
+
+	go o.stopWhenIdle(ctx, subj, f)
 }
 
-func (o *Observer) stopFunction(subj string, f *Function) {
-	// TODO: implement me
-	panic("implement me...")
+func (o *Observer) stopWhenIdle(ctx context.Context, subject string, f *Function) {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			o.mtx.Lock()
+			idle := time.Since(f.lastEvent) >= idleTimeout
+
+			if idle {
+				f.Status = Stopping
+			}
+			o.mtx.Unlock()
+
+			if !idle {
+				continue
+			}
+
+			if err := f.Stop(ctx); err != nil {
+				log.Printf("stopping %s failed: %v", f.UniqueName, err)
+				return
+			}
+
+			o.mtx.Lock()
+			pending := f.pendingSeq
+			if pending != 0 {
+				f.Status = Active
+			} else {
+				f.Status = Idle
+			}
+			o.mtx.Unlock()
+
+			if pending != 0 {
+				go o.startFunction(ctx, subject, f, pending)
+			}
+			return
+		}
+	}
 }
 
 func (o *Observer) setIdle(subj string) {

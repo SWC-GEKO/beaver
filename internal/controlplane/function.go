@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/SWC-GEKO/beaver/internal/docker"
 	"github.com/compose-spec/compose-go/v2/types"
@@ -18,6 +19,8 @@ import (
 type Function struct {
 	UniqueName string
 	Status     Status
+	pendingSeq uint64
+	lastEvent  time.Time
 
 	record         FunctionRecord
 	composeService api.Compose
@@ -29,6 +32,7 @@ type Status int
 const (
 	Idle Status = iota
 	Active
+	Stopping
 )
 
 func NewFunction(f FunctionRecord) (*Function, error) {
