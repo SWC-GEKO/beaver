@@ -1,0 +1,4 @@
+results/
+figures/
+.secrets/
+state.env
