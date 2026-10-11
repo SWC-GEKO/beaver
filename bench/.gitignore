@@ -2,3 +2,4 @@ results/
 figures/
 .secrets/
 state.env
+config.env
