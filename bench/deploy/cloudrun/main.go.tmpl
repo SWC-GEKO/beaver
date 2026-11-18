@@ -1,0 +1,24 @@
+// Cloud Run entrypoint. The original evaluation/*/cmd/main.go listens on 127.0.0.1:8082 (local dev);
+// Cloud Run needs 0.0.0.0:$PORT. The function packages (pkg/) are untouched.
+// The BENCH_BOOT line lets the analysis verify that a run really hit a cold instance.
+package main
+
+import (
+	_ "__MODULE__/pkg"
+	"log"
+	"os"
+	"time"
+
+	"github.com/GoogleCloudPlatform/functions-framework-go/funcframework"
+)
+
+func main() {
+	log.Printf("BENCH_BOOT %d", time.Now().UnixNano())
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	if err := funcframework.StartHostPort("0.0.0.0", port); err != nil {
+		log.Fatalf("funcframework: %v", err)
+	}
+}

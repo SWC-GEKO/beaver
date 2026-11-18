@@ -1,0 +1,63 @@
+# ---------------------------------------------------------------------------
+#  Beaver – root .gitignore
+#  bench/.gitignore additionally ignores benchmark results, figures, secrets
+#  and the local config (config.env, state.env).
+#  Keep go.mod AND go.sum files tracked – they are needed for reproducible builds.
+# ---------------------------------------------------------------------------
+
+# --- OS / editor -----------------------------------------------------------
+.DS_Store
+._*
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+*.swp
+*~
+
+# --- Go build output -------------------------------------------------------
+/bin/
+/dist/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.prof
+coverage.*
+go.work
+go.work.sum
+
+# Compiled load generators in evaluation/ (built from the .go sources next to them)
+/evaluation/gcf-batch/lg-batched
+/evaluation/gcf-single/lg/lg
+
+# --- Beaver runtime artefacts ----------------------------------------------
+# build scratch of the control plane (unzipped uploads, per-function build dirs)
+tmp/
+*.zip
+# compose file written by docker.RunProject during a cold start
+/compose.yaml
+/internal/controlplane/compose.yaml
+# file-based function registries (created at runtime and by the tests)
+/internal/controlplane/test-registry/
+/internal/controlplane/evaluation-registry/
+evaluation-registry/
+
+# --- Python (bench/analysis) -----------------------------------------------
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# --- Secrets / credentials (never commit) ----------------------------------
+.secrets/
+.env
+*.env.local
+keys.json
+*-key.json
+*.pem
+*_key
+*_key.pub
