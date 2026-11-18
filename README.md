@@ -13,8 +13,6 @@ Beaver is a research prototype from the [Scalable Software Systems (3S)](https:/
 
 Typical workload: many short streams that each last seconds to minutes and carry low event rates, for example security-camera feeds, IoT sessions or user sessions. Classic stream processors (Flink, Beam/Dataflow) start too slowly for these streams. Classic FaaS has no stream semantics and keeps no state between events.
 
-> Background: C. Stahl, *Scaling Serverless Stream Processing for Short-Running Lightweight Streams*, Bachelor's thesis, TU Berlin, 2026.
-
 ## Contents
 - [Architecture](#architecture)
 - [Programming model](#programming-model)
