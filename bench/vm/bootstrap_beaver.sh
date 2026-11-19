@@ -26,7 +26,7 @@ rm -rf "$tmp"
 log "building control plane (quiet=${BEAVER_QUIET}, resource limits via BENCH_* env)"
 # The three files are patched IN PLACE (same module/build context as an unpatched build) and restored
 # from backups right after the build, even on failure; nothing stays modified in $REPO_DIR.
-# Patches (all disclosed in README section "Changes to Beaver while measured"):
+# Patches (documented in bench/README.md, section 6):
 #   1. internal/controlplane/bench_resources.go (new): applies cpu/memory limits from env
 #      BENCH_ROUTER_CPUS/_MEM_MIB and BENCH_PROCESSOR_CPUS/_MEM_MIB to every service of the
 #      generated compose project (router bigger than processors). The NATS container is untouched.
